@@ -230,6 +230,7 @@ footer{text-align:center;padding:1.5rem;font-size:11px;color:var(--text3);border
 
 <nav class="nav">
   <button class="tab active" onclick="show('current')">📋 진행 현황</button>
+  <button class="tab" onclick="show('action')">⏰ 마감 · 할 일</button>
   <button class="tab" onclick="show('overview')">📊 전체 현황</button>
   <button class="tab" onclick="show('compare')">📈 연도별 비교</button>
   <button class="tab" onclick="show('staff')">👥 담당자 현황</button>
@@ -276,18 +277,23 @@ footer{text-align:center;padding:1.5rem;font-size:11px;color:var(--text3);border
   <div id="cur-blocks"></div>
 </section>
 
+<!-- ⓪-2 마감 · 할 일 -->
+<section class="sec" id="sec-action">
+  <div id="act-blocks"></div>
+</section>
+
 <!-- ① 전체 현황 -->
 <section class="sec" id="sec-overview">
   <div class="mrow" id="ov-metrics"></div>
   <div class="card">
-    <div class="ctitle">호별 꼭지 수 추이</div>
+    <div class="ctitle">호별 콘텐츠 수 추이</div>
     <div class="csub">격주간 · 매월 1일/15일 발행 · 점 하나가 한 호입니다</div>
-    <div class="cwrap" style="height:300px"><canvas id="c-issue-trend" role="img" aria-label="호별 꼭지 수 추이 선 차트"></canvas></div>
+    <div class="cwrap" style="height:300px"><canvas id="c-issue-trend" role="img" aria-label="호별 콘텐츠 수 추이 선 차트"></canvas></div>
   </div>
   <div class="g2">
     <div class="card" style="margin-bottom:0">
-      <div class="ctitle">연도별 꼭지 수</div><div class="csub">연 24호 기준</div>
-      <div class="cwrap" style="height:280px"><canvas id="c-year-bar" role="img" aria-label="연도별 꼭지 수 막대 차트"></canvas></div>
+      <div class="ctitle">연도별 콘텐츠 수</div><div class="csub">연 24호 기준</div>
+      <div class="cwrap" style="height:280px"><canvas id="c-year-bar" role="img" aria-label="연도별 콘텐츠 수 막대 차트"></canvas></div>
     </div>
     <div class="card" style="margin-bottom:0">
       <div class="ctitle">코너 구성</div><div class="csub">상위 코너 + 그 외</div>
@@ -306,11 +312,11 @@ footer{text-align:center;padding:1.5rem;font-size:11px;color:var(--text3);border
   </div>
   <div class="g2">
     <div class="card" style="margin-bottom:0">
-      <div class="ctitle">호당 평균 꼭지 수</div><div class="csub">한 호에 몇 꼭지를 실었는지</div>
-      <div class="cwrap" style="height:260px"><canvas id="c-per-issue" role="img" aria-label="호당 평균 꼭지 수 막대 차트"></canvas></div>
+      <div class="ctitle">호당 평균 콘텐츠 수</div><div class="csub">한 호에 몇 콘텐츠를 실었는지</div>
+      <div class="cwrap" style="height:260px"><canvas id="c-per-issue" role="img" aria-label="호당 평균 콘텐츠 수 막대 차트"></canvas></div>
     </div>
     <div class="card" style="margin-bottom:0">
-      <div class="ctitle">연도별 담당 인원</div><div class="csub">그 해 한 꼭지라도 맡은 사람 수</div>
+      <div class="ctitle">연도별 담당 인원</div><div class="csub">그 해 한 콘텐츠라도 맡은 사람 수</div>
       <div class="cwrap" style="height:260px"><canvas id="c-headcount" role="img" aria-label="연도별 담당 인원 막대 차트"></canvas></div>
     </div>
   </div>
@@ -320,19 +326,19 @@ footer{text-align:center;padding:1.5rem;font-size:11px;color:var(--text3);border
 <section class="sec" id="sec-staff">
   <div class="card">
     <div class="ctitle">담당자별 연도 추이</div>
-    <div class="csub">꼭지 수 상위 6인</div>
+    <div class="csub">콘텐츠 수 상위 6인</div>
     <div class="cwrap" style="height:300px"><canvas id="c-staff-trend" role="img" aria-label="담당자별 연도 추이 선 차트"></canvas></div>
   </div>
   <div class="card">
     <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:1rem">
       <div>
-        <div class="ctitle">꼭지 목록</div>
+        <div class="ctitle">콘텐츠 목록</div>
         <div class="csub" style="margin-bottom:0">담당자·연도·코너로 걸러서 봅니다</div>
       </div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem" id="st-staff-btns"></div>
     <div id="st-summary" style="display:flex;align-items:center;gap:16px;padding:12px 14px;background:var(--surface2);border-radius:8px;margin-bottom:1.25rem;font-size:13px;flex-wrap:wrap">
-      <span style="font-weight:600">전체 <strong id="st-total" style="color:var(--blue)">-</strong>꼭지</span>
+      <span style="font-weight:600">전체 <strong id="st-total" style="color:var(--blue)">-</strong>콘텐츠</span>
       <span style="color:var(--border)">|</span>
       <div id="st-sections" style="display:flex;gap:6px;flex-wrap:wrap"></div>
     </div>
@@ -346,7 +352,7 @@ footer{text-align:center;padding:1.5rem;font-size:11px;color:var(--text3);border
         </tr></thead>
         <tbody id="st-tbody"></tbody>
       </table>
-      <div id="st-empty" style="display:none;text-align:center;padding:2rem;color:var(--text3);font-size:13px">해당 조건의 꼭지가 없습니다</div>
+      <div id="st-empty" style="display:none;text-align:center;padding:2rem;color:var(--text3);font-size:13px">해당 조건의 콘텐츠가 없습니다</div>
     </div>
   </div>
 </section>
@@ -356,7 +362,7 @@ footer{text-align:center;padding:1.5rem;font-size:11px;color:var(--text3);border
   <div class="mrow" id="wl-metrics"></div>
   <div class="card">
     <div class="ctitle">담당자별 업무량 (코너 누적)</div>
-    <div class="csub">막대 길이 = 맡은 꼭지 수, 색 = 코너. 공동 담당은 각자 1꼭지로 셉니다</div>
+    <div class="csub">막대 길이 = 맡은 콘텐츠 수, 색 = 코너. 공동 담당은 각자 1콘텐츠로 셉니다</div>
     <div class="cwrap" id="wl-staff-wrap" style="height:420px"><canvas id="c-wl-staff" role="img" aria-label="담당자별 업무량 누적 막대 차트"></canvas></div>
   </div>
   <div class="card">
@@ -376,14 +382,14 @@ footer{text-align:center;padding:1.5rem;font-size:11px;color:var(--text3);border
 <!-- ⑤ 코너 분석 -->
 <section class="sec" id="sec-section">
   <div class="card">
-    <div class="ctitle">코너별 꼭지 수</div>
+    <div class="ctitle">코너별 콘텐츠 수</div>
     <div class="csub">상위 25개 · 코너를 누르면 아래에 목록이 나옵니다</div>
-    <div class="cwrap" id="sec-bar-wrap" style="height:620px"><canvas id="c-section-bar" role="img" aria-label="코너별 꼭지 수 막대 차트"></canvas></div>
+    <div class="cwrap" id="sec-bar-wrap" style="height:620px"><canvas id="c-section-bar" role="img" aria-label="코너별 콘텐츠 수 막대 차트"></canvas></div>
   </div>
   <div class="g2">
     <div class="card" style="margin-bottom:0">
       <div class="ctitle">게재 상태</div>
-      <div class="csub">지면이 안 잡힌 꼭지(미정)와 뒤로 미룬 꼭지(연기)의 비중</div>
+      <div class="csub">지면이 안 잡힌 콘텐츠(미정)와 뒤로 미룬 콘텐츠(연기)의 비중</div>
       <div class="cwrap" style="height:260px"><canvas id="c-status" role="img" aria-label="게재 상태 도넛 차트"></canvas></div>
     </div>
     <div class="card" style="margin-bottom:0">
@@ -416,7 +422,7 @@ footer{text-align:center;padding:1.5rem;font-size:11px;color:var(--text3);border
     <div class="card" style="margin-bottom:0">
       <div class="ctitle">조직 분류별 비중</div>
       <div class="csub">기구조직도(2026.10.15부) 기준</div>
-      <div class="cwrap" style="height:300px"><canvas id="c-dp-cat" role="img" aria-label="조직 분류별 꼭지 수 도넛 차트"></canvas></div>
+      <div class="cwrap" style="height:300px"><canvas id="c-dp-cat" role="img" aria-label="조직 분류별 콘텐츠 수 도넛 차트"></canvas></div>
     </div>
     <div class="card" style="margin-bottom:0">
       <div class="ctitle">분류별 상위 부서</div>
@@ -467,10 +473,10 @@ const GOOGLE_APPS_SCRIPT_URL=GOOGLE_APPS_SCRIPT_URLS[0];   // 오류 안내의 �
 let ALL_DATA=[];   // {issue, year, month, day, dateLabel, page, status, section, title, note, staffRaw, staff[]}
 
 const gr='rgba(0,0,0,0.06)', tx='#6b6b65';
-const tabOrder=['current','overview','compare','staff','workload','section','dept'];
-const tabNames=['진행 현황','전체 현황','연도별 비교','담당자 현황','업무량 분석','코너 분석','부서 분석'];
+const tabOrder=['current','action','overview','compare','staff','workload','section','dept'];
+const tabNames=['진행 현황','마감 · 할 일','전체 현황','연도별 비교','담당자 현황','업무량 분석','코너 분석','부서 분석'];
 // 연도 선택을 따르지 않는 탭 (진행 현황은 오늘 기준, 연도별 비교는 연도 비교가 목적)
-const YEAR_FREE_TABS=['current','compare'];
+const YEAR_FREE_TABS=['current','action','compare'];
 const drawn={};
 
 /* ── 호수 → 발행일 ──
@@ -648,7 +654,7 @@ async function loadSheetData(){
     fromCache=readCache();
     if(fromCache){
       ALL_DATA=fromCache.rows;
-      console.log('캐시로 먼저 그림:',ALL_DATA.length,'꼭지');
+      console.log('캐시로 먼저 그림:',ALL_DATA.length,'콘텐츠');
       await loadDoctors();
       attributeDepartments();
       initDashboard();
@@ -660,7 +666,7 @@ async function loadSheetData(){
   try{
     const raw=await fetchSheet(3);
     ALL_DATA=buildRows(raw);
-    console.log('로드 완료:',ALL_DATA.length,'꼭지 (원본',raw.length,'행)');
+    console.log('로드 완료:',ALL_DATA.length,'콘텐츠 (원본',raw.length,'행)');
     writeCache(ALL_DATA);
     await loadDoctors();
     attributeDepartments();
@@ -690,6 +696,7 @@ function show(name){
   document.querySelectorAll('.tab')[tabOrder.indexOf(name)].classList.add('active');
   if(!drawn[name]){
     if(name==='current') drawCurrent();
+    if(name==='action') drawAction();
     if(name==='overview') drawOverview();
     if(name==='compare') drawCompare();
     if(name==='staff') drawStaff();
@@ -740,7 +747,7 @@ function syncYearBar(tab){
   document.getElementById('year-btns').style.opacity=free?'.35':'1';
   document.getElementById('year-btns').style.pointerEvents=free?'none':'auto';
   document.getElementById('year-note').textContent=free
-    ? (tab==='current'?'진행 현황은 오늘 기준이라 연도 선택을 따르지 않습니다':'연도별 비교는 항상 전체 기간을 봅니다')
+    ? (tab==='current'||tab==='action'?'진행 현황과 마감 · 할 일은 오늘 기준이라 연도 선택을 따르지 않습니다':'연도별 비교는 항상 전체 기간을 봅니다')
     : yearLabel()+' 기준으로 보고 있습니다';
 }
 function destroyChart(id){const c=Chart.getChart(id); if(c) c.destroy();}
@@ -802,7 +809,7 @@ function issueBlock(issue, kind){
       '<strong>'+s+'</strong> <span style="color:var(--text3)">'+byStaff[s]+'</span></span>';
   }).join('');
 
-  // 지면이 안 잡힌 꼭지를 위로 올립니다 — 지금 챙겨야 하는 것들입니다
+  // 지면이 안 잡힌 콘텐츠를 위로 올립니다 — 지금 챙겨야 하는 것들입니다
   const order={미정:0, 연기:1, 게재:2};
   const sorted=rows.slice().sort(function(a,b){
     if(order[a.status]!==order[b.status]) return order[a.status]-order[b.status];
@@ -830,7 +837,7 @@ function issueBlock(issue, kind){
     '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:1rem">'+
       '<div>'+
         '<div class="ctitle">'+badge+' &nbsp;제'+issue+'호 · '+d.year+'년 '+d.month+'월 '+d.day+'일 자</div>'+
-        '<div class="csub" style="margin-bottom:0">'+dday(issue)+' · 총 '+rows.length+'꼭지 · 담당 '+people.length+'명</div>'+
+        '<div class="csub" style="margin-bottom:0">'+dday(issue)+' · 총 '+rows.length+'콘텐츠 · 담당 '+people.length+'명</div>'+
       '</div>'+
       '<div style="display:flex;gap:8px;flex-wrap:wrap;font-size:12px">'+
         '<span class="scard" style="padding:.45rem .8rem">지면 확정 <strong>'+(st['게재']||0)+'</strong></span>'+
@@ -858,8 +865,131 @@ function drawCurrent(){
   else html+='<div class="card" style="color:var(--text3);font-size:13px">다음 호 탭이 아직 시트에 없습니다</div>';
   html+='<div style="font-size:12px;color:var(--text3);line-height:1.7;padding:0 .25rem">'+
     '오늘 기준으로 아직 발행되지 않은 호 중 가장 가까운 호를 진행 중으로 봅니다. 발행일이 지나면 자동으로 넘어갑니다.<br>'+
-    '<strong>지면 미정</strong>은 편집계획안에 지면 칸이 비어 있는 꼭지, <strong>연기</strong>는 지면 칸이 "연기"인 꼭지입니다. 둘 다 위로 올려 두었습니다.</div>';
+    '<strong>지면 미정</strong>은 편집계획안에 지면 칸이 비어 있는 콘텐츠, <strong>연기</strong>는 지면 칸이 "연기"인 콘텐츠입니다. 둘 다 위로 올려 두었습니다.</div>';
   wrap.innerHTML=html;
+}
+
+/* ══ ⓪-2 마감 · 할 일 ══
+   진행 중 호와 다음 호에서 아직 지면이 확정되지 않은(미정·연기) 콘텐츠만 모아 보여줍니다.
+   비고 칸에 적힌 'M/D' 날짜를 마감일로 읽어 남은 기간을 계산합니다. */
+function escH(s){
+  return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+function deadlineOf(r){
+  const m=/(\d{1,2})\s*\/\s*(\d{1,2})/.exec(r.note||'');
+  if(!m) return null;
+  const mo=parseInt(m[1],10), dd=parseInt(m[2],10);
+  if(mo<1||mo>12||dd<1||dd>31) return null;
+  const base=issueDate(r.issue);
+  let y=base.year;
+  if(mo-base.month>6) y--; else if(base.month-mo>6) y++;   // 12월 호의 1월 마감 등 연말 넘김 보정
+  return new Date(y, mo-1, dd);
+}
+function daysFromToday(d){
+  const t=new Date(); t.setHours(0,0,0,0);
+  return Math.round((d-t)/86400000);
+}
+function ddayText(n){
+  return n===0 ? '오늘' : (n>0 ? 'D-'+n : (-n)+'일 지남');
+}
+function actionIssues(){
+  const p=pipeline();
+  return {p:p, issues:[p.current,p.next].filter(function(x){return x!=null;})};
+}
+
+function drawAction(){
+  const wrap=document.getElementById('act-blocks');
+  const a=actionIssues();
+  if(!a.issues.length){
+    wrap.innerHTML='<div class="card" style="color:var(--text3)">표시할 호가 없습니다</div>';
+    return;
+  }
+  const rows=ALL_DATA.filter(function(r){return a.issues.indexOf(r.issue)>=0;});
+  const open=rows.filter(function(r){return r.status!=='게재';});
+
+  const summary=a.issues.map(function(iss){
+    const rs=rows.filter(function(r){return r.issue===iss;});
+    const openN=rs.filter(function(r){return r.status!=='게재';}).length;
+    const fixedN=rs.length-openN;
+    const badge=iss===a.p.current ? '<span class="badge bo">진행 중</span>' : '<span class="badge bi">다음 호</span>';
+    const d=issueDate(iss);
+    return '<div class="card" style="margin-bottom:0">'+
+      '<div class="ctitle">'+badge+' &nbsp;제'+iss+'호 · '+d.month+'월 '+d.day+'일 자</div>'+
+      '<div class="csub">'+dday(iss)+' · 총 '+rs.length+'콘텐츠</div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;font-size:12px;margin-top:.5rem">'+
+        '<span class="scard" style="padding:.45rem .8rem">지면 확정 <strong>'+fixedN+'</strong></span>'+
+        '<span class="scard" style="padding:.45rem .8rem;'+(openN?'border-color:var(--amber);color:var(--amber)':'')+'">미확정 <strong>'+openN+'</strong></span>'+
+      '</div></div>';
+  }).join('');
+
+  // 마감 날짜 (비고 기준)
+  const dl=rows.map(function(r){return {r:r, d:deadlineOf(r)};})
+    .filter(function(x){return x.d && daysFromToday(x.d)>=-3;})
+    .sort(function(x,y){return x.d-y.d;});
+  const dlHtml = dl.length
+    ? '<div style="overflow-x:auto"><table class="dtable"><thead><tr><th>날짜</th><th>남은 기간</th><th>호</th><th>담당</th><th style="width:40%">콘텐츠</th><th>비고</th></tr></thead><tbody>'+
+      dl.map(function(x){
+        const n=daysFromToday(x.d);
+        const hot=n<=3;
+        return '<tr'+(hot?' style="background:#fff4f4"':'')+'>'+
+          '<td class="num">'+(x.d.getMonth()+1)+'/'+x.d.getDate()+'</td>'+
+          '<td style="font-weight:600;white-space:nowrap;color:'+(hot?'#b91c1c':'inherit')+'">'+ddayText(n)+'</td>'+
+          '<td style="white-space:nowrap">제'+x.r.issue+'호 <span class="tag-type tag-'+escH(x.r.status)+'">'+escH(x.r.status)+'</span></td>'+
+          '<td style="font-weight:600;white-space:nowrap">'+escH(x.r.staffRaw)+'</td>'+
+          '<td style="word-break:keep-all">'+escH(x.r.title||'제목 미정')+'</td>'+
+          '<td style="color:var(--text3);font-size:12px;word-break:keep-all">'+escH(x.r.note)+'</td>'+
+        '</tr>';
+      }).join('')+'</tbody></table></div>'
+    : '<div style="color:var(--text3);font-size:13px">앞으로 다가오는 비고 날짜가 없습니다</div>';
+
+  // 담당자별 미확정 콘텐츠
+  const byStaff={};
+  open.forEach(function(r){
+    r.staff.forEach(function(s){ (byStaff[s]||(byStaff[s]=[])).push(r); });
+  });
+  const people=Object.keys(byStaff).sort(function(x,y){return byStaff[y].length-byStaff[x].length;});
+  const staffHtml = people.length
+    ? people.map(function(s){
+        const list=byStaff[s].slice().sort(function(x,y){return x.issue-y.issue || pageKey(x.page)-pageKey(y.page);});
+        return '<div style="border:1px solid var(--border);border-radius:10px;padding:.9rem 1rem;margin-bottom:10px">'+
+          '<div style="display:flex;justify-content:space-between;font-weight:700;margin-bottom:6px"><span>'+escH(s)+'</span><span style="color:var(--amber)">'+list.length+'건</span></div>'+
+          list.map(function(r){
+            return '<div style="font-size:13px;padding:3px 0;color:var(--text2)">제'+r.issue+'호 · '+(r.page?escH(r.page):'지면 미정')+' · '+escH(r.section)+' · '+escH(r.title||'제목 미정')+' <span style="color:var(--text3)">('+escH(r.status)+')</span></div>';
+          }).join('')+
+        '</div>';
+      }).join('')
+    : '<div style="color:var(--text3);font-size:13px">미확정 콘텐츠가 없습니다</div>';
+
+  wrap.innerHTML=
+    '<div class="g2" style="margin-bottom:1.25rem">'+summary+'</div>'+
+    '<div class="card"><div class="ctitle">마감 날짜 (비고 기준)</div>'+
+      '<div class="csub">진행 중과 다음 호 콘텐츠의 비고에 적힌 날짜(예: 12/8)를 앞으로 다가오는 순서로 모았습니다. 지난 날짜는 3일 이내만 남깁니다. 3일 이내는 빨갛게 표시합니다.</div>'+dlHtml+'</div>'+
+    '<div class="card">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:1rem">'+
+        '<div><div class="ctitle">담당자별 미확정 콘텐츠</div>'+
+        '<div class="csub" style="margin-bottom:0">지면 미정 또는 연기 상태인 콘텐츠. 진행 중과 다음 호만 봅니다.</div></div>'+
+        '<button class="pdf-btn" style="color:var(--text);background:var(--surface2);border-color:var(--border)" onclick="downloadActionCsv()">CSV 내려받기</button>'+
+      '</div>'+staffHtml+
+    '</div>';
+}
+
+function downloadActionCsv(){
+  const a=actionIssues();
+  const rows=ALL_DATA.filter(function(r){return a.issues.indexOf(r.issue)>=0 && r.status!=='게재';});
+  const q=function(v){ return '"'+String(v==null?'':v).replace(/"/g,'""')+'"'; };
+  const lines=[['호','상태','지면','코너','콘텐츠','비고','담당'].map(q).join(',')].concat(
+    rows.map(function(r){
+      return [ '제'+r.issue+'호', r.status, r.page, r.section, r.title, r.note, r.staffRaw ].map(q).join(',');
+    })
+  );
+  const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'});
+  const link=document.createElement('a');
+  link.href=URL.createObjectURL(blob);
+  link.download='병원보_미확정_콘텐츠_'+a.issues.map(function(i){return '제'+i+'호';}).join('_')+'.csv';
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(function(){URL.revokeObjectURL(link.href);},1000);
 }
 
 /* ══ ① 전체 현황 ══ */
@@ -872,19 +1002,19 @@ function drawOverview(){
   const first=issues.length?issueDate(issues[0]):null, last=issues.length?issueDate(issues[issues.length-1]):null;
 
   document.getElementById('ov-metrics').innerHTML=
-    '<div class="mc g"><div class="mlabel">총 꼭지 수</div><div class="mval">'+D.length.toLocaleString()+'<span class="munit">꼭지</span></div><div class="msub">'+yearLabel()+'</div></div>'+
+    '<div class="mc g"><div class="mlabel">총 콘텐츠 수</div><div class="mval">'+D.length.toLocaleString()+'<span class="munit">콘텐츠</span></div><div class="msub">'+yearLabel()+'</div></div>'+
     '<div class="mc b"><div class="mlabel">분석 호수</div><div class="mval">'+issues.length+'<span class="munit">호</span></div><div class="msub">'+(issues.length?issues[0]+'~'+issues[issues.length-1]+'호':'-')+'</div></div>'+
     '<div class="mc a"><div class="mlabel">기간</div><div class="mval" style="font-size:1.5rem">'+(first?first.year+'–'+last.year:'-')+'</div><div class="msub">'+(first?first.year+'.'+first.month+' ~ '+last.year+'.'+last.month:'-')+'</div></div>'+
     '<div class="mc p"><div class="mlabel">담당 인원</div><div class="mval">'+people.size+'<span class="munit">명</span></div><div class="msub">편집실·SNS 표기 제외</div></div>'+
-    '<div class="mc t"><div class="mlabel">호당 평균</div><div class="mval">'+(issues.length?(D.length/issues.length).toFixed(1):'0')+'<span class="munit">꼭지</span></div><div class="msub">한 호에 싣는 꼭지 수</div></div>';
+    '<div class="mc t"><div class="mlabel">호당 평균</div><div class="mval">'+(issues.length?(D.length/issues.length).toFixed(1):'0')+'<span class="munit">콘텐츠</span></div><div class="msub">한 호에 싣는 콘텐츠 수</div></div>';
 
   const byIssue={}; D.forEach(function(r){byIssue[r.issue]=(byIssue[r.issue]||0)+1;});
   destroyChart('c-issue-trend');
   new Chart(document.getElementById('c-issue-trend'),{
     type:'line',
-    data:{labels:issues.map(String),datasets:[{label:'꼭지 수',data:issues.map(function(i){return byIssue[i]||0;}),borderColor:'#2d6a4f',backgroundColor:'rgba(45,106,79,.08)',fill:true,tension:.3,pointRadius:2,pointHoverRadius:5}]},
+    data:{labels:issues.map(String),datasets:[{label:'콘텐츠 수',data:issues.map(function(i){return byIssue[i]||0;}),borderColor:'#2d6a4f',backgroundColor:'rgba(45,106,79,.08)',fill:true,tension:.3,pointRadius:2,pointHoverRadius:5}]},
     options:{responsive:true,maintainAspectRatio:false,animation:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{title:function(c){const i=Number(c[0].label),d=issueDate(i);return i+'호 ('+d.year+'.'+d.month+'.'+d.day+')';},label:function(c){return c.parsed.y+'꼭지';}}}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{title:function(c){const i=Number(c[0].label),d=issueDate(i);return i+'호 ('+d.year+'.'+d.month+'.'+d.day+')';},label:function(c){return c.parsed.y+'콘텐츠';}}}},
       scales:{x:{grid:{display:false},ticks:{color:tx,maxTicksLimit:16}},y:{grid:{color:gr},ticks:{color:tx},beginAtZero:true}}}
   });
 
@@ -906,7 +1036,7 @@ function drawOverview(){
     data:{labels:labels,datasets:[{data:labels.map(function(l){return pie[l];}),backgroundColor:labels.map(function(_,i){return secColor(i);}),borderWidth:0}]},
     options:{responsive:true,maintainAspectRatio:false,cutout:'55%',animation:false,
       plugins:{legend:{position:'right',labels:{color:tx,font:{size:11},padding:8,boxWidth:12}},
-        tooltip:{callbacks:{label:function(c){return c.label+': '+c.parsed+'꼭지 ('+Math.round(c.parsed/D.length*100)+'%)';}}}}}
+        tooltip:{callbacks:{label:function(c){return c.label+': '+c.parsed+'콘텐츠 ('+Math.round(c.parsed/D.length*100)+'%)';}}}}}
   });
 }
 
@@ -926,7 +1056,7 @@ function drawCompare(){
     let diff='<span class="eq">기준</span>';
     if(prev!==null && prev>0){
       const d=cur-prev, pct=Math.round(d/prev*100);
-      diff='<span class="'+(d>0?'up':d<0?'dn':'eq')+'">'+(d>0?'▲':d<0?'▼':'–')+' '+Math.abs(d)+'꼭지 ('+(d>0?'+':'')+pct+'%)</span>';
+      diff='<span class="'+(d>0?'up':d<0?'dn':'eq')+'">'+(d>0?'▲':d<0?'▼':'–')+' '+Math.abs(d)+'콘텐츠 ('+(d>0?'+':'')+pct+'%)</span>';
     }
     return '<div class="cmp-card"><div class="cmp-yr">'+y+'</div><div class="cmp-val">'+cur+'</div><div class="cmp-diff">'+diff+'</div></div>';
   }).join('');
@@ -948,7 +1078,7 @@ function drawCompare(){
   new Chart(document.getElementById('c-per-issue'),{
     type:'bar',
     data:{labels:ys.map(String),datasets:[{data:ys.map(function(y){const n=issuesByYear[y]?issuesByYear[y].size:0; return n?+(byYear[y]/n).toFixed(1):0;}),backgroundColor:'#1a3a6b',borderRadius:4,borderWidth:0}]},
-    options:{responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.parsed.y+'꼭지/호';}}}},
+    options:{responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return c.parsed.y+'콘텐츠/호';}}}},
       scales:{x:{grid:{display:false},ticks:{color:tx}},y:{grid:{color:gr},ticks:{color:tx},beginAtZero:true}}}
   });
 
@@ -1039,7 +1169,7 @@ function renderStTable(){
       '<td style="word-break:keep-all">'+r.title+'</td>'+
       '<td style="font-weight:600;white-space:nowrap">'+r.staffRaw+'</td>'+
     '</tr>';
-  }).join('')+(rows.length>800?'<tr data-nosort="1"><td colspan="7" style="padding:12px;text-align:center;color:var(--text3)">상위 800꼭지만 표시했습니다 (전체 '+rows.length+'꼭지)</td></tr>':'');
+  }).join('')+(rows.length>800?'<tr data-nosort="1"><td colspan="7" style="padding:12px;text-align:center;color:var(--text3)">상위 800콘텐츠만 표시했습니다 (전체 '+rows.length+'콘텐츠)</td></tr>':'');
 }
 
 /* ══ ④ 업무량 분석 ══ */
@@ -1076,11 +1206,11 @@ function drawWorkload(){
   const label=yearLabel();
 
   document.getElementById('wl-metrics').innerHTML=
-    '<div class="mc g"><div class="mlabel">총 꼭지 수</div><div class="mval">'+a.total.toLocaleString()+'<span class="munit">꼭지</span></div><div class="msub">'+label+'</div></div>'+
+    '<div class="mc g"><div class="mlabel">총 콘텐츠 수</div><div class="mval">'+a.total.toLocaleString()+'<span class="munit">콘텐츠</span></div><div class="msub">'+label+'</div></div>'+
     '<div class="mc b"><div class="mlabel">담당 인원</div><div class="mval">'+a.people.length+'<span class="munit">명</span></div><div class="msub">해당 기간 실적 있는 인원</div></div>'+
-    '<div class="mc a"><div class="mlabel">1인 평균</div><div class="mval">'+(a.people.length?(a.personAssign/a.people.length).toFixed(1):'0')+'<span class="munit">꼭지</span></div><div class="msub">공동 담당은 각자 1꼭지</div></div>'+
-    '<div class="mc p"><div class="mlabel">최다 담당자</div><div class="mval" style="font-size:1.5rem">'+(top||'-')+'</div><div class="msub">'+(top?a.staffTotal[top]+'꼭지 · 배정의 '+pctA(a.staffTotal[top])+'%':'데이터 없음')+'</div></div>'+
-    '<div class="mc t"><div class="mlabel">최다 코너</div><div class="mval" style="font-size:1.5rem">'+(topSec||'-')+'</div><div class="msub">'+(topSec?a.secTotal[topSec]+'꼭지 · 전체의 '+pctT(a.secTotal[topSec])+'%':'데이터 없음')+'</div></div>';
+    '<div class="mc a"><div class="mlabel">1인 평균</div><div class="mval">'+(a.people.length?(a.personAssign/a.people.length).toFixed(1):'0')+'<span class="munit">콘텐츠</span></div><div class="msub">공동 담당은 각자 1콘텐츠</div></div>'+
+    '<div class="mc p"><div class="mlabel">최다 담당자</div><div class="mval" style="font-size:1.5rem">'+(top||'-')+'</div><div class="msub">'+(top?a.staffTotal[top]+'콘텐츠 · 배정의 '+pctA(a.staffTotal[top])+'%':'데이터 없음')+'</div></div>'+
+    '<div class="mc t"><div class="mlabel">최다 코너</div><div class="mval" style="font-size:1.5rem">'+(topSec||'-')+'</div><div class="msub">'+(topSec?a.secTotal[topSec]+'콘텐츠 · 전체의 '+pctT(a.secTotal[topSec])+'%':'데이터 없음')+'</div></div>';
 
   document.getElementById('wl-staff-wrap').style.height=Math.max(260,a.staffs.length*34+70)+'px';
   destroyChart('c-wl-staff');
@@ -1089,7 +1219,7 @@ function drawWorkload(){
     data:{labels:a.staffs,datasets:a.sections.map(function(s,i){return {label:s,data:a.staffs.map(function(p){return a.cross[p][s]||0;}),backgroundColor:secColor(i),borderWidth:0};})},
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,animation:false,
       plugins:{legend:{position:'bottom',labels:{color:tx,font:{size:11},padding:10,boxWidth:12}},
-        tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+c.parsed.x+'꼭지';}}}},
+        tooltip:{callbacks:{label:function(c){return c.dataset.label+': '+c.parsed.x+'콘텐츠';}}}},
       scales:{x:{stacked:true,grid:{color:gr},ticks:{color:tx},beginAtZero:true},y:{stacked:true,grid:{display:false},ticks:{color:tx}}}}
   });
 
@@ -1108,7 +1238,7 @@ function drawWorkload(){
   document.getElementById('wl-empty').style.display=a.staffs.length?'none':'block';
   document.getElementById('wl-table').style.display=a.staffs.length?'table':'none';
   document.getElementById('wl-note').innerHTML=
-    '총 꼭지 '+a.total+'건 · 담당 배정 '+a.assign+'건 (공동 담당은 참여자 각자에게 1꼭지씩 집계되어 합계가 총 꼭지 수보다 큽니다). '+
+    '총 콘텐츠 '+a.total+'건 · 담당 배정 '+a.assign+'건 (공동 담당은 참여자 각자에게 1콘텐츠씩 집계되어 합계가 총 콘텐츠 수보다 큽니다). '+
     '코너는 상위 '+WL_TOP+'종만 따로 표시하고 나머지는 <strong>그 외</strong>로 묶었습니다.';
 }
 
@@ -1120,8 +1250,8 @@ function selectSection(name){
   const card=document.getElementById('sec-list-card');
   if(!selectedSection){ card.style.display='none'; return; }
   const rows=yearRows().filter(function(r){return r.section===selectedSection;}).sort(function(a,b){return b.issue-a.issue;});
-  document.getElementById('sec-list-title').textContent='「'+selectedSection+'」 꼭지 목록';
-  document.getElementById('sec-list-sub').textContent=rows.length+'꼭지';
+  document.getElementById('sec-list-title').textContent='「'+selectedSection+'」 콘텐츠 목록';
+  document.getElementById('sec-list-sub').textContent=rows.length+'콘텐츠';
   document.getElementById('sec-list-tbody').innerHTML=rows.slice(0,500).map(function(r){
     return '<tr><td class="num">'+r.issue+'</td><td class="num" data-sort="'+dateKey(r)+'">'+r.year+'.'+r.month+'.'+r.day+'</td>'+
       '<td class="num" data-sort="'+pageKey(r.page)+'">'+(r.page||'-')+'</td>'+
@@ -1142,7 +1272,7 @@ function drawSection(){
     data:{labels:ranked,datasets:[{data:ranked.map(function(k){return c[k];}),backgroundColor:ranked.map(function(_,i){return secColor(i);}),borderRadius:3,borderWidth:0}]},
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,animation:false,
       onClick:function(e,els){ if(els.length) selectSection(ranked[els[0].index]); },
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(x){return x.parsed.x+'꼭지 — 눌러서 목록 보기';}}}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(x){return x.parsed.x+'콘텐츠 — 눌러서 목록 보기';}}}},
       scales:{x:{grid:{color:gr},ticks:{color:tx},beginAtZero:true},y:{grid:{display:false},ticks:{color:tx,font:{size:11}}}}}
   });
 
@@ -1154,7 +1284,7 @@ function drawSection(){
     data:{labels:stKeys,datasets:[{data:stKeys.map(function(k){return st[k];}),backgroundColor:['#2d6a4f','#b5601a','#888780'],borderWidth:0}]},
     options:{responsive:true,maintainAspectRatio:false,cutout:'58%',animation:false,
       plugins:{legend:{position:'bottom',labels:{color:tx,font:{size:11},padding:10,boxWidth:12}},
-        tooltip:{callbacks:{label:function(x){return x.label+': '+x.parsed+'꼭지 ('+Math.round(x.parsed/D.length*100)+'%)';}}}}}
+        tooltip:{callbacks:{label:function(x){return x.label+': '+x.parsed+'콘텐츠 ('+Math.round(x.parsed/D.length*100)+'%)';}}}}}
   });
 
   const ys=dataYears();
@@ -1270,7 +1400,7 @@ function selectDept(name){
   const rows=yearRows().filter(function(r){const u=deptOf(r); return u&&u.n===selectedDept;})
                        .sort(function(a,b){return b.issue-a.issue;});
   document.getElementById('dp-list-title').textContent='「'+selectedDept+'」 기사 목록';
-  document.getElementById('dp-list-sub').textContent=yearLabel()+' · '+rows.length+'꼭지';
+  document.getElementById('dp-list-sub').textContent=yearLabel()+' · '+rows.length+'콘텐츠';
   document.getElementById('dp-list-tbody').innerHTML=rows.slice(0,400).map(function(r){
     return '<tr><td class="num">'+r.issue+'</td><td class="num" data-sort="'+dateKey(r)+'">'+r.year+'.'+r.month+'.'+r.day+'</td>'+
       '<td style="white-space:nowrap">'+r.section+'</td>'+
@@ -1301,11 +1431,11 @@ function drawDept(){
   const topCat=cats.slice().sort(function(a,b){return byCat[b]-byCat[a];})[0];
 
   document.getElementById('dp-metrics').innerHTML=
-    '<div class="mc g"><div class="mlabel">부서가 확인된 꼭지</div><div class="mval">'+matched.toLocaleString()+'<span class="munit">꼭지</span></div><div class="msub">'+yearLabel()+'</div></div>'+
-    '<div class="mc a"><div class="mlabel">확인율</div><div class="mval">'+rate+'<span class="munit">%</span></div><div class="msub">전체 '+D.length.toLocaleString()+'꼭지 중</div></div>'+
+    '<div class="mc g"><div class="mlabel">부서가 확인된 콘텐츠</div><div class="mval">'+matched.toLocaleString()+'<span class="munit">콘텐츠</span></div><div class="msub">'+yearLabel()+'</div></div>'+
+    '<div class="mc a"><div class="mlabel">확인율</div><div class="mval">'+rate+'<span class="munit">%</span></div><div class="msub">전체 '+D.length.toLocaleString()+'콘텐츠 중</div></div>'+
     '<div class="mc b"><div class="mlabel">등장 부서 수</div><div class="mval">'+units.length+'<span class="munit">곳</span></div><div class="msub">조직도 '+ORG_UNITS.length+'곳 중</div></div>'+
-    '<div class="mc p"><div class="mlabel">최다 부서</div><div class="mval" style="font-size:1.4rem">'+(topUnit||'-')+'</div><div class="msub">'+(topUnit?byUnit[topUnit]+'꼭지':'데이터 없음')+'</div></div>'+
-    '<div class="mc t"><div class="mlabel">최다 분류</div><div class="mval" style="font-size:1.4rem">'+(topCat||'-')+'</div><div class="msub">'+(topCat?byCat[topCat]+'꼭지':'데이터 없음')+'</div></div>';
+    '<div class="mc p"><div class="mlabel">최다 부서</div><div class="mval" style="font-size:1.4rem">'+(topUnit||'-')+'</div><div class="msub">'+(topUnit?byUnit[topUnit]+'콘텐츠':'데이터 없음')+'</div></div>'+
+    '<div class="mc t"><div class="mlabel">최다 분류</div><div class="mval" style="font-size:1.4rem">'+(topCat||'-')+'</div><div class="msub">'+(topCat?byCat[topCat]+'콘텐츠':'데이터 없음')+'</div></div>';
 
   destroyChart('c-dp-cat');
   new Chart(document.getElementById('c-dp-cat'),{
@@ -1313,7 +1443,7 @@ function drawDept(){
     data:{labels:cats,datasets:[{data:cats.map(function(c){return byCat[c];}),backgroundColor:cats.map(function(_,i){return secColor(i);}),borderWidth:0}]},
     options:{responsive:true,maintainAspectRatio:false,cutout:'55%',animation:false,
       plugins:{legend:{position:'right',labels:{color:tx,font:{size:11},padding:8,boxWidth:12}},
-        tooltip:{callbacks:{label:function(x){return x.label+': '+x.parsed+'꼭지 ('+(matched?Math.round(x.parsed/matched*100):0)+'%)';}}}}}
+        tooltip:{callbacks:{label:function(x){return x.label+': '+x.parsed+'콘텐츠 ('+(matched?Math.round(x.parsed/matched*100):0)+'%)';}}}}}
   });
 
   document.getElementById('dp-cat-list').innerHTML=cats.map(function(c,i){
@@ -1321,7 +1451,7 @@ function drawDept(){
     return '<div class="scard" style="padding:.7rem 1rem">'+
       '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">'+
         '<span style="font-weight:700"><span class="tl-chip" style="background:'+secColor(i)+'"></span>'+c+'</span>'+
-        '<span style="color:var(--text3)">'+byCat[c]+'꼭지</span></div>'+
+        '<span style="color:var(--text3)">'+byCat[c]+'콘텐츠</span></div>'+
       '<div style="font-size:12px;color:var(--text2)">'+
         (inCat.map(function(u){return u+' <span style="color:var(--text3)">'+byUnit[u]+'</span>';}).join(' · ')||'-')+'</div>'+
     '</div>';
@@ -1335,18 +1465,18 @@ function drawDept(){
     data:{labels:top,datasets:[{data:top.map(function(u){return byUnit[u];}),backgroundColor:top.map(function(u){return secColor(ORG_CATS.indexOf(unitCat[u]));}),borderRadius:3,borderWidth:0}]},
     options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,animation:false,
       onClick:function(e,els){ if(els.length) selectDept(top[els[0].index]); },
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(x){return unitCat[top[x.dataIndex]]+' · '+x.parsed.x+'꼭지 — 눌러서 목록 보기';}}}},
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(x){return unitCat[top[x.dataIndex]]+' · '+x.parsed.x+'콘텐츠 — 눌러서 목록 보기';}}}},
       scales:{x:{grid:{color:gr},ticks:{color:tx},beginAtZero:true},y:{grid:{display:false},ticks:{color:tx,font:{size:11}}}}}
   });
 
   document.getElementById('dp-note').innerHTML=
     '부서는 세 단계로 붙입니다 — '+
-    '<strong>①</strong> 글에 조직 이름이 그대로 있는 경우 '+bySrc.org.toLocaleString()+'꼭지, '+
-    '<strong>②</strong> 비고의 이름이 amc.seoul.kr 의료진 명단에 있는 경우 '+bySrc.doc.toLocaleString()+'꼭지, '+
-    '<strong>③</strong> ①에서 배운 이름(주임·과장 등)으로 찾은 경우 '+bySrc.learn.toLocaleString()+'꼭지.<br>'+
+    '<strong>①</strong> 글에 조직 이름이 그대로 있는 경우 '+bySrc.org.toLocaleString()+'콘텐츠, '+
+    '<strong>②</strong> 비고의 이름이 amc.seoul.kr 의료진 명단에 있는 경우 '+bySrc.doc.toLocaleString()+'콘텐츠, '+
+    '<strong>③</strong> ①에서 배운 이름(주임·과장 등)으로 찾은 경우 '+bySrc.learn.toLocaleString()+'콘텐츠.<br>'+
     '<strong>확인율 '+rate+'%</strong> 입니다. 나머지는 <em>"제38회 아산상 시상식 | 박준규 (11/25)"</em> 처럼 글 어디에도 부서 단서가 없거나, '+
     '독자의 소리·정답 및 당첨자처럼 애초에 부서와 무관한 코너입니다. '+
-    '위 수치는 <strong>부서가 확인된 '+matched.toLocaleString()+'꼭지 기준</strong>이며 전체 분포와는 다를 수 있습니다.<br>'+
+    '위 수치는 <strong>부서가 확인된 '+matched.toLocaleString()+'콘텐츠 기준</strong>이며 전체 분포와는 다를 수 있습니다.<br>'+
     '조직 목록은 기구조직도(변경) 2026.10.15부 '+ORG_UNITS.length+'곳, 의료진 명단은 amc.seoul.kr 기준 '+Object.keys(DOCTORS).length.toLocaleString()+'명입니다.';
 
   selectedDept=null;
