@@ -629,6 +629,8 @@ async function loadSheetData(){
     if(fromCache){
       ALL_DATA=fromCache.rows;
       console.log('캐시로 먼저 그림:',ALL_DATA.length,'꼭지');
+      await loadDoctors();
+      attributeDepartments();
       initDashboard();
       showCacheNotice(fromCache.t,'checking');
     }
@@ -640,6 +642,8 @@ async function loadSheetData(){
     ALL_DATA=buildRows(raw);
     console.log('로드 완료:',ALL_DATA.length,'꼭지 (원본',raw.length,'행)');
     writeCache(ALL_DATA);
+    await loadDoctors();
+    attributeDepartments();
     if(fromCache) redrawCurrentTab(); else initDashboard();
     showCacheNotice(0,null);
     showLoadError(null);
@@ -1134,13 +1138,86 @@ const ORG_UNITS=[{"n":"재해예방관리실","c":"직속 조직"},{"n":"임상�
 const ORG_SORTED=ORG_UNITS.slice().sort(function(a,b){return b.n.length-a.n.length;});
 const ORG_CATS=['진료과','진료 분과','센터','전문병원','진료지원','간호','행정·지원','연구','교육','직속 조직'];
 
-function deptOf(r){
-  const hay=(r.title+' '+r.note+' '+r.section).replace(/\s+/g,'');
-  for(let i=0;i<ORG_SORTED.length;i++){
-    if(hay.indexOf(ORG_SORTED[i].n)>=0) return ORG_SORTED[i];
-  }
-  return null;
+/* 사이트의 진료과 이름 중 조직도에 따로 없는 것들을 조직도 단위로 올려 붙입니다.
+   어린이병원 세부 분과가 대부분이고, 조직도에 없는 이름을 새로 만들지 않기 위함입니다. */
+const DEPT_ROLLUP={'소아소화기영양과':'소아청소년과','소아신경외과':'소아청소년과','소아재활의학과':'소아청소년과',
+  '소아정신건강의학과':'소아청소년과','소아신경과':'소아청소년과','소아감염과':'소아청소년과','소아중환자과':'소아청소년과',
+  '소아내분비대사과':'소아청소년과','소아신장과':'소아청소년과','소아정형외과':'소아청소년과','소아치과':'소아청소년과',
+  '수부외과':'정형외과','심장외과':'심장혈관흉부외과','뇌전증클리닉':'신경과'};
+
+const ORG_BY_NAME={}; ORG_UNITS.forEach(function(u){ORG_BY_NAME[u.n]=u;});
+function unitByDeptName(d){
+  const k=String(d||'').replace(/\s+/g,'');
+  return ORG_BY_NAME[k] || ORG_BY_NAME[DEPT_ROLLUP[k]] || null;
 }
+
+/* amc.seoul.kr 의료진 명단 (tools/fetch-doctors.py 로 만듭니다). 이름 → 대표 진료과 */
+let DOCTORS={};
+async function loadDoctors(){
+  try{
+    const j=await (await fetch('doctors.json',{cache:'no-store'})).json();
+    DOCTORS=j.primary||{};
+    console.log('의료진 명단:',Object.keys(DOCTORS).length,'명');
+  }catch(e){
+    DOCTORS={};
+    console.warn('doctors.json 을 못 읽어 의료진 이름 매칭을 건너뜁니다.',e);
+  }
+}
+
+const PR_NAMES=new Set();
+const TITLE_RE=/([가-힣]{2,4})\s*(?:교수|조교수|부교수|석좌교수|임상강사|임상전임강사|전임의|전공의|연구원|주임|과장|대리|사원|팀장|파트장|UM|유엠|간호사|원장|실장|센터장)/g;
+function titledNames(t){
+  const o=[]; let m; TITLE_RE.lastIndex=0; const str=String(t||'');
+  while((m=TITLE_RE.exec(str))!==null){ if(!PR_NAMES.has(m[1]) && o.indexOf(m[1])<0) o.push(m[1]); }
+  return o;
+}
+let LEARNED={};
+
+/* 기사 → 부서. 세 단계를 순서대로 봅니다.
+   1) 조직 이름이 글에 그대로 있는 경우   2) 의료진 명단에 있는 이름   3) 1)에서 배운 이름 */
+function attributeDepartments(){
+  PR_NAMES.clear();
+  ALL_DATA.forEach(function(r){ r.staff.forEach(function(s){PR_NAMES.add(s);}); });
+
+  ALL_DATA.forEach(function(r){
+    const hay=(r.title+' '+r.note+' '+r.section).replace(/\s+/g,'');
+    r.unit=null; r.unitSrc=null;
+    for(let i=0;i<ORG_SORTED.length;i++){
+      if(hay.indexOf(ORG_SORTED[i].n)>=0){ r.unit=ORG_SORTED[i]; r.unitSrc='org'; break; }
+    }
+  });
+
+  // 1단계로 확정된 기사에서 '직책 붙은 사람 → 부서'를 배웁니다 (주임·과장 등 비의료진용)
+  const nd={};
+  ALL_DATA.forEach(function(r){
+    if(!r.unit) return;
+    titledNames(r.note+' '+r.title).forEach(function(n){
+      if(!nd[n]) nd[n]={}; nd[n][r.unit.n]=(nd[n][r.unit.n]||0)+1;
+    });
+  });
+  LEARNED={};
+  Object.keys(nd).forEach(function(n){
+    const e=Object.keys(nd[n]).map(function(k){return [k,nd[n][k]];}).sort(function(a,b){return b[1]-a[1];});
+    const tot=e.reduce(function(s,x){return s+x[1];},0);
+    if(e[0][1]/tot>=0.6) LEARNED[n]=ORG_BY_NAME[e[0][0]]||null;   // 부서가 갈리는 이름은 버립니다
+  });
+
+  ALL_DATA.forEach(function(r){
+    if(r.unit) return;
+    const toks=(r.note+' '+r.title).match(/[가-힣]{2,4}/g)||[];
+    for(let i=0;i<toks.length;i++){
+      if(PR_NAMES.has(toks[i])) continue;
+      const d=DOCTORS[toks[i]];
+      if(d){ const u=unitByDeptName(d); if(u){ r.unit=u; r.unitSrc='doc'; return; } }
+    }
+    const named=titledNames(r.note+' '+r.title);
+    for(let i=0;i<named.length;i++){
+      if(LEARNED[named[i]]){ r.unit=LEARNED[named[i]]; r.unitSrc='learn'; return; }
+    }
+  });
+}
+
+function deptOf(r){ return r.unit||null; }
 
 let selectedDept=null;
 
@@ -1165,12 +1242,12 @@ function selectDept(name){
 
 function drawDept(){
   const D=yearRows();
-  const byUnit={}, byCat={}, unitCat={};
+  const byUnit={}, byCat={}, unitCat={}, bySrc={org:0,doc:0,learn:0};
   let matched=0;
   D.forEach(function(r){
     const u=deptOf(r);
     if(!u) return;
-    matched++;
+    matched++; bySrc[r.unitSrc]=(bySrc[r.unitSrc]||0)+1;
     byUnit[u.n]=(byUnit[u.n]||0)+1;
     byCat[u.c]=(byCat[u.c]||0)+1;
     unitCat[u.n]=u.c;
@@ -1221,10 +1298,14 @@ function drawDept(){
   });
 
   document.getElementById('dp-note').innerHTML=
-    '기사 제목·비고·코너에서 조직 이름을 찾아 부서를 붙입니다. <strong>확인율 '+rate+'%</strong>인 이유는, '+
-    '뉴스 기사의 비고가 <em>"박준규, 안중호 (11.9)"</em> 처럼 담당자와 의료진 이름만 적혀 있어 부서를 알 수 없는 경우가 많기 때문입니다. '+
-    '위 수치는 <strong>부서가 확인된 '+matched.toLocaleString()+'꼭지 기준</strong>이며, 나머지를 포함한 실제 분포와는 다를 수 있습니다.<br>'+
-    '조직 목록은 기구조직도(변경) 2026.10.15부 기준 '+ORG_UNITS.length+'곳입니다.';
+    '부서는 세 단계로 붙입니다 — '+
+    '<strong>①</strong> 글에 조직 이름이 그대로 있는 경우 '+bySrc.org.toLocaleString()+'꼭지, '+
+    '<strong>②</strong> 비고의 이름이 amc.seoul.kr 의료진 명단에 있는 경우 '+bySrc.doc.toLocaleString()+'꼭지, '+
+    '<strong>③</strong> ①에서 배운 이름(주임·과장 등)으로 찾은 경우 '+bySrc.learn.toLocaleString()+'꼭지.<br>'+
+    '<strong>확인율 '+rate+'%</strong> 입니다. 나머지는 <em>"제38회 아산상 시상식 | 박준규 (11/25)"</em> 처럼 글 어디에도 부서 단서가 없거나, '+
+    '독자의 소리·정답 및 당첨자처럼 애초에 부서와 무관한 코너입니다. '+
+    '위 수치는 <strong>부서가 확인된 '+matched.toLocaleString()+'꼭지 기준</strong>이며 전체 분포와는 다를 수 있습니다.<br>'+
+    '조직 목록은 기구조직도(변경) 2026.10.15부 '+ORG_UNITS.length+'곳, 의료진 명단은 amc.seoul.kr 기준 '+Object.keys(DOCTORS).length.toLocaleString()+'명입니다.';
 
   selectedDept=null;
   document.getElementById('dp-list-card').style.display='none';
