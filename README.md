@@ -38,6 +38,7 @@ Google Sheets `★병원보 편집계획안(NEW)`(asanpr.members@gmail.com 소�
 [apps-script/Code.gs](apps-script/Code.gs) 는 실제로 도는 코드의 **사본**입니다.
 여기를 고쳐도 반영되지 않습니다 — 편집기에 붙여넣고 재배포해야 합니다.
 
+- 주소는 `index.html` 의 `GOOGLE_APPS_SCRIPT_URLS` 목록에 있습니다. 위에서부터 시도하므로 **다른 계정의 예비 주소를 둘째 줄에 넣어두면 자동으로 넘어갑니다**
 - 재배포: `배포 > 배포 관리 > 연필 > 새 버전` — 이렇게 해야 URL 이 유지됩니다
 - `새 배포` 를 누르면 URL 이 바뀌어 `GOOGLE_APPS_SCRIPT_URL` 도 같이 고쳐야 합니다
 - 점검: 편집기에서 `testCollect` 실행 (소요 시간·꼭지 수·캐시 상태가 로그에 찍힙니다)

@@ -454,7 +454,16 @@ footer{text-align:center;padding:1.5rem;font-size:11px;color:var(--text3);border
 <script>
 
 /* ══ 데이터 ══ */
-const GOOGLE_APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbzARRoZl7y1WLrLiwnlmOqvwrmXZqnMrjGkyPi2tlqQDMrLdErp39_tBN4nBVetAuFzxA/exec';
+/* 데이터 공급 주소. 위에서부터 차례로 시도하고, 되는 것이 나오면 거기서 멈춥니다.
+   Apps Script 웹 앱은 '실행: 나'로 돌기 때문에 배포한 사람의 계정에 묶입니다.
+   그 계정이 막히면 대시보드가 통째로 멈추므로, 다른 담당자 계정에도 같은 스크립트를
+   배포해 두 번째 줄에 적어 두세요. 그러면 손댈 필요 없이 알아서 넘어갑니다.
+   (추가 방법은 HANDOVER.md 0번 참고) */
+const GOOGLE_APPS_SCRIPT_URLS=[
+  'https://script.google.com/macros/s/AKfycbzARRoZl7y1WLrLiwnlmOqvwrmXZqnMrjGkyPi2tlqQDMrLdErp39_tBN4nBVetAuFzxA/exec'   // 주 (이다예 계정)
+  // ,'여기에 예비 계정의 /exec 주소'   // 예비 — 배포 후 앞의 주석을 지우세요
+];
+const GOOGLE_APPS_SCRIPT_URL=GOOGLE_APPS_SCRIPT_URLS[0];   // 오류 안내의 링크용
 let ALL_DATA=[];   // {issue, year, month, day, dateLabel, page, status, section, title, note, staffRaw, staff[]}
 
 const gr='rgba(0,0,0,0.06)', tx='#6b6b65';
@@ -524,20 +533,27 @@ function fmtDate(r){return r.month+'/'+r.day;}
 async function fetchSheet(tries){
   let last;
   for(let i=0;i<tries;i++){
-    try{
-      const ctrl=new AbortController();
-      // 시트가 120호가 넘어 Apps Script 응답이 40초쯤 걸립니다. 웹 앱 자체가 60초에서 끊기므로 그보다 살짝 짧게.
-      const timer=setTimeout(function(){ctrl.abort();},55000);
-      let res;
-      try{ res=await fetch(GOOGLE_APPS_SCRIPT_URL,{cache:'no-store',signal:ctrl.signal}); }
-      finally{ clearTimeout(timer); }
-      if(res.ok){
-        const json=await res.json();
-        if(Array.isArray(json)) return json;
-        last=new Error('배열이 아닌 응답');
-      } else last=new Error('HTTP '+res.status);
-    }catch(e){
-      last=(e&&e.name==='AbortError')?new Error('응답 없음 (55초 초과)'):e;
+    // 한 번의 시도 안에서 주소를 차례로 훑습니다. 앞의 것이 막혀도 뒤의 것이 살아있으면 넘어갑니다.
+    for(let u=0;u<GOOGLE_APPS_SCRIPT_URLS.length;u++){
+      const url=GOOGLE_APPS_SCRIPT_URLS[u];
+      try{
+        const ctrl=new AbortController();
+        // 시트가 120호가 넘어 Apps Script 응답이 40초쯤 걸립니다. 웹 앱 자체가 60초에서 끊기므로 그보다 살짝 짧게.
+        const timer=setTimeout(function(){ctrl.abort();},55000);
+        let res;
+        try{ res=await fetch(url,{cache:'no-store',signal:ctrl.signal}); }
+        finally{ clearTimeout(timer); }
+        if(res.ok){
+          const json=await res.json();
+          if(Array.isArray(json)){
+            if(u>0) console.warn('주 엔드포인트가 응답하지 않아 예비('+(u+1)+'번)로 받았습니다.');
+            return json;
+          }
+          last=new Error('배열이 아닌 응답');
+        } else last=new Error('HTTP '+res.status);
+      }catch(e){
+        last=(e&&e.name==='AbortError')?new Error('응답 없음 (55초 초과)'):e;
+      }
     }
     if(i<tries-1) await new Promise(function(r){setTimeout(r,800*Math.pow(2,i));});
   }
