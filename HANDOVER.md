@@ -39,6 +39,32 @@ Apps Script 웹 앱이 **"실행: 나"** 로 배포돼 있습니다.
 > 4번에서 받은 새 주소로 5번을 안 하면, 옛 계정이 살아있는 동안은 멀쩡해 보이다가
 > 계정이 닫히는 날 갑자기 멈춥니다. **두 단계를 반드시 같이 하세요.**
 
+### 저장소를 새 계정에 새로 만드는 경우
+
+저장소 권한을 넘겨받는 대신, 새 담당자 GitHub 계정에 **새 저장소를 만들어 옮길 수도** 있습니다.
+저장소 안의 파일은 전부 그대로 쓰면 됩니다. 새로 만들 것은 **구글 쪽(시트 권한 + Apps Script)뿐**입니다.
+
+1. 새 담당자가 GitHub 에서 빈 저장소를 만듭니다 (Public, README 생성 체크 해제)
+2. 기존 저장소를 받아 원격 주소만 바꿔서 올립니다
+
+```bash
+git clone https://github.com/daye8965/amc-hospital-paper.git
+```
+
+```bash
+cd amc-hospital-paper && git remote set-url origin https://github.com/<새계정>/<새저장소>.git && git push -u origin main
+```
+
+3. 새 저장소 `Settings > Pages` 에서 Source 를 **main / (root)** 로 지정합니다
+4. 위 "가장 중요한 것"의 1~5번(시트 권한 → Apps Script 배포 → `GOOGLE_APPS_SCRIPT_URL` 교체)을 합니다
+
+> **공개 주소가 바뀝니다.** `daye8965.github.io/amc-hospital-paper` → `<새계정>.github.io/<새저장소>`
+> 기존 주소를 받아 간 사람들에게 새 주소를 알려야 하고, 북마크·보고서 링크도 바꿔야 합니다.
+> 옛 저장소를 지우면 옛 주소는 죽습니다. 한동안 양쪽을 같이 두는 편이 안전합니다.
+
+> `doctors.json`, `org-units.json`, `apps-script/Code.gs`, `tools/` 는 저장소에 다 들어 있으니
+> 따로 챙길 것이 없습니다. 다시 만들고 싶다면 7번을 보세요.
+
 ### 넘겨받은 뒤 확인
 
 - 대시보드를 열어 총 꼭지 수가 **8번의 기준 수치**와 비슷한지 봅니다
