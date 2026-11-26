@@ -1115,11 +1115,6 @@ function drawStaff(){
     const sum=function(o){return Object.keys(o).reduce(function(n,k){return n+o[k];},0);};
     return (NON_PERSON.indexOf(a)>=0)-(NON_PERSON.indexOf(b)>=0) || sum(map[b])-sum(map[a]);
   });
-  const sb=document.getElementById('st-staff-btns');
-  if(!sb.children.length){
-    sb.innerHTML=['전체'].concat(people).map(function(s){
-      return '<button class="staff-sel-btn'+(s===stStaff?' active':'')+'" onclick="setStStaff(\''+s+'\')">'+s+'</button>';}).join('');
-  }
   renderStTable();
 }
 
@@ -1137,21 +1132,54 @@ function inList(r){
 }
 function showMoreSt(){ stShown+=50; renderStTable(true); }
 
+let stSearch='';
+let stStaffList=[], stSecList=[];
+function stEsc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function stPick(kind,i){ if(kind==='staff') setStStaff(stStaffList[i]); else setStSection(stSecList[i]); }
+function setStSearch(v){ stSearch=v||''; renderStTable(); }
+function stLi(label,count,on,kind,i){
+  return '<button onclick="stPick(&quot;'+kind+'&quot;,'+i+')" style="display:flex;justify-content:space-between;gap:10px;width:100%;padding:8px 12px;border:none;border-bottom:1px solid var(--border);background:'+(on?'#e0f2fe':'#fff')+';cursor:pointer;text-align:left;font-size:13px;font-family:inherit;color:var(--text);'+(on?'font-weight:700;':'')+'">'+
+    '<span>'+stEsc(label)+'</span><span style="color:var(--text3)">'+count+'</span></button>';
+}
+function ensureStControls(){
+  const sb=document.getElementById('st-staff-btns');
+  if(sb && !document.getElementById('st-search')){
+    sb.style.display='block';
+    sb.innerHTML='<input id="st-search" type="search" placeholder="콘텐츠 · 코너 · 담당 검색" oninput="setStSearch(this.value)" style="width:100%;max-width:420px;padding:9px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;margin-bottom:10px">'+
+      '<details id="st-staff-det" style="border:1px solid var(--border);border-radius:8px;margin-bottom:10px"><summary id="st-staff-sum" style="padding:9px 12px;cursor:pointer;font-weight:600;font-size:13px"></summary><div id="st-staff-list" style="max-height:320px;overflow:auto;border-top:1px solid var(--border)"></div></details>';
+  }
+  const sc=document.getElementById('st-sections');
+  if(sc && !document.getElementById('st-sec-det')){
+    sc.style.display='block';
+    sc.style.width='100%';
+    sc.innerHTML='<details id="st-sec-det" style="border:1px solid var(--border);border-radius:8px"><summary id="st-sec-sum" style="padding:9px 12px;cursor:pointer;font-weight:600;font-size:13px"></summary><div id="st-sec-list" style="max-height:320px;overflow:auto;border-top:1px solid var(--border)"></div></details>';
+  }
+}
 function renderStTable(keep){
   if(!keep) stShown=50;
-  const base=yearRows().filter(function(r){
-    return stStaff==='전체'||r.staff.indexOf(stStaff)>=0;
-  }).filter(inList);
+  ensureStControls();
+  const q=stSearch.replace(/\s+/g,'').toLowerCase();
+  const period=yearRows().filter(inList).filter(function(r){
+    if(!q) return true;
+    return (String(r.title)+String(r.section)+String(r.staffRaw)+String(r.note)+String(r.issue)).replace(/\s+/g,'').toLowerCase().indexOf(q)>=0;
+  });
+  const staffCount={};
+  period.forEach(function(r){ r.staff.forEach(function(s){ if(s!=='미상') staffCount[s]=(staffCount[s]||0)+1; }); });
+  stStaffList=['전체'].concat(Object.keys(staffCount).sort(function(a,b){return staffCount[b]-staffCount[a];}));
+  const base=period.filter(function(r){return stStaff==='전체'||r.staff.indexOf(stStaff)>=0;});
+  const sc={}; base.forEach(function(r){sc[r.section]=(sc[r.section]||0)+1;});
+  stSecList=['전체'].concat(Object.keys(sc).sort(function(a,b){return sc[b]-sc[a];}));
   const rows=stSection==='전체'?base:base.filter(function(r){return r.section===stSection;});
 
-  const sc={}; base.forEach(function(r){sc[r.section]=(sc[r.section]||0)+1;});
   document.getElementById('st-total').textContent=base.length;
-  document.getElementById('st-sections').innerHTML=Object.keys(sc)
-    .sort(function(a,b){return sc[b]-sc[a];}).slice(0,14)
-    .map(function(k){
-      const on=k===stSection;
-      return '<button data-sec-btn="'+k+'" onclick="setStSection(\''+k.replace(/'/g,"\\'")+'\')" style="padding:6px 12px;border:1px solid '+(on?'var(--blue)':'var(--border)')+';border-radius:6px;cursor:pointer;font-weight:500;font-size:12px;font-family:\'Noto Sans KR\',sans-serif;background:'+(on?'var(--blue)':'transparent')+';color:'+(on?'#fff':'var(--text2)')+'">'+k+' '+sc[k]+'</button>';
-    }).join('') || '<span style="color:var(--text3)">데이터 없음</span>';
+  document.getElementById('st-staff-sum').textContent='담당자: '+stStaff+' ▼';
+  document.getElementById('st-staff-list').innerHTML=stStaffList.map(function(s,i){
+    return stLi(s, s==='전체'?period.length:staffCount[s], s===stStaff, 'staff', i);
+  }).join('');
+  document.getElementById('st-sec-sum').textContent='코너: '+stSection+' (총 '+(stSecList.length-1)+'개) ▼';
+  document.getElementById('st-sec-list').innerHTML=stSecList.map(function(s,i){
+    return stLi(s, s==='전체'?base.length:sc[s], s===stSection, 'sec', i);
+  }).join('');
   document.getElementById('st-reset').style.display=stSection==='전체'?'none':'block';
 
   const tb=document.getElementById('st-tbody'), empty=document.getElementById('st-empty');
