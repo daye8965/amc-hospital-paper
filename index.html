@@ -1202,7 +1202,7 @@ function drawWorkload(){
       a.sections.map(function(sec){return td(a.cross[s][sec]?a.cross[s][sec]:'·');}).join('')+
       td(a.staffTotal[s],true)+td(pctA(a.staffTotal[s])+'%')+'</tr>';
   }).join('')+(a.staffs.length?'<tr data-nosort="1" style="border-top:2px solid var(--border)"><td style="font-weight:700">합계</td>'+
-    a.sections.map(function(sec){return td(a.secTotal[sec],true);}).join('')+td(a.assign,true)+td('100%',true)+'</tr>':'');
+    a.sections.map(function(sec){return td(a.staffs.reduce(function(n,s){return n+(a.cross[s][sec]||0);},0),true);}).join('')+td(a.assign,true)+td('100%',true)+'</tr>':'');
   document.getElementById('wl-empty').style.display=a.staffs.length?'none':'block';
   document.getElementById('wl-table').style.display=a.staffs.length?'table':'none';
   document.getElementById('wl-note').innerHTML=
