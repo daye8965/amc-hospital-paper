@@ -4,12 +4,24 @@
  * 원본: "★병원보 편집계획안(NEW)" (asanpr.members@gmail.com 소유)
  * 탭 하나가 한 호(號)이고, 탭 이름이 호수입니다(예: "786").
  *
+ * ── 속도 ──
+ * 탭이 122개라 전부 읽으면 40초가 걸리고, 웹 앱은 60초에서 끊깁니다.
+ * 바뀌는 건 최근 몇 호뿐이고 지나간 호는 그대로이므로,
+ *   · 최근 LIVE_ISSUES 호는 매번 새로 읽고
+ *   · 그보다 오래된 호는 Drive 에 쌓아둔 캐시 파일에서 가져옵니다.
+ * 캐시는 요청이 올 때 빠진 호만 채웁니다. 시간 트리거는 쓰지 않습니다.
+ *
+ * ── 지나간 호를 고쳤을 때 ──
+ * 캐시에 이미 들어간 호를 수정하면 대시보드에 반영되지 않습니다.
+ * 그때는 편집기에서 rebuildCache() 를 한 번 실행하거나, /exec?rebuild=1 을 열면 됩니다.
+ *
  * 배포: 배포 > 새 배포 > 웹 앱 (실행: 나 / 액세스: 링크가 있는 모든 사용자)
- * 나온 /exec URL 을 병원보 대시보드의 GOOGLE_APPS_SCRIPT_URL 에 넣습니다.
  * 이후 수정은 배포 > 배포 관리 > 연필 > 새 버전 으로 해야 URL 이 유지됩니다.
  */
 
 const SPREADSHEET_ID = '1A_pBtxztIUlwBl2an8-hWiVHE38lt3_0nS8HsKJ2doQ';
+const CACHE_FILENAME = 'amc-hospital-paper-cache.json';
+const LIVE_ISSUES = 4;          // 최근 몇 호를 매번 새로 읽을지
 
 // 헤더 이름 → 필드. 탭마다 표기가 다를 수 있어 별칭을 둡니다.
 const FIELD_ALIASES = {
@@ -23,61 +35,129 @@ const FIELD_ALIASES = {
 // 데이터 탭으로 인정하는 최소 조건
 const REQUIRED_FIELDS = ['section', 'title', 'staff'];
 
-function doGet() {
+function doGet(e) {
+  const rebuild = !!(e && e.parameter && e.parameter.rebuild);
   return ContentService
-    .createTextOutput(JSON.stringify(collectRows_()))
+    .createTextOutput(JSON.stringify(collectRows_(rebuild)))
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-function collectRows_() {
-  const out = [];
-  SpreadsheetApp.openById(SPREADSHEET_ID).getSheets().forEach(function (sheet) {
-    const name = sheet.getName().trim();
-    const issue = Number((name.match(/\d+/) || [])[0]);
-    if (!issue) return;                       // 호수 탭이 아니면 건너뜀
+/* ────────────────────────────── 수집 ────────────────────────────── */
 
-    const values = sheet.getDataRange().getDisplayValues();
-    const headerRow = findHeaderRow_(values);
-    if (headerRow < 0) return;
+function collectRows_(forceRebuild) {
+  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
 
-    const map = buildColumnMap_(values[headerRow]);
-    const meta = readIssueMeta_(values, headerRow);
+  // 호수 탭만, 최신 호가 앞으로
+  const entries = [];
+  ss.getSheets().forEach(function (sheet) {
+    const m = sheet.getName().trim().match(/\d+/);
+    if (m) entries.push({ issue: Number(m[0]), sheet: sheet });
+  });
+  entries.sort(function (a, b) { return b.issue - a.issue; });
 
-    for (let i = headerRow + 1; i < values.length; i++) {
-      const row = values[i];
-      const title   = cell_(row, map.title);
-      const section = cell_(row, map.section);
-      const staff   = cell_(row, map.staff);
-      if (!title && !section && !staff) continue;      // 빈 줄
-      if (!staff) continue;                            // 담당 없는 줄은 집계에서 제외
-      // 헤더가 두 줄인 탭이 있어 머리글이 데이터로 새어 나옵니다
-      if (staff === '담당' || title === '콘텐츠' || section === '코너명' || section === '카테고리') continue;
+  const live = entries.slice(0, LIVE_ISSUES);
+  const past = entries.slice(LIVE_ISSUES);
 
-      const page = cell_(row, map.page);
-      out.push({
-        issue: issue,
-        year: meta.year,          // 탭에 연도가 없으면 null
-        month: meta.month,        // 발행 월
-        day: meta.day,
-        issueLabel: meta.label,   // 예: "제786호(12월 1일 자)"
-        page: page,
-        // 지면이 '연기'이거나 비어 있으면 아직 지면이 안 잡힌 건
-        status: /연기/.test(page) ? '연기' : (page ? '게재' : '미정'),
-        section: section,
-        title: title,
-        note: cell_(row, map.note),
-        staff: staff
-      });
-    }
+  const cache = forceRebuild ? { rows: [], issues: [] } : readCache_();
+  const cached = {};
+  cache.issues.forEach(function (i) { cached[i] = true; });
+
+  // 캐시에 없는 지난 호만 새로 읽어 채웁니다 (평소엔 0~1개)
+  const missing = past.filter(function (en) { return !cached[en.issue]; });
+  if (missing.length) {
+    missing.forEach(function (en) {
+      cache.rows = cache.rows.concat(readSheet_(en.sheet, en.issue));
+      cache.issues.push(en.issue);
+    });
+    writeCache_(cache);
+  }
+
+  // 최근 호는 캐시를 믿지 않고 항상 새로 읽습니다
+  const isLive = {};
+  live.forEach(function (en) { isLive[en.issue] = true; });
+  const out = cache.rows.filter(function (r) { return !isLive[r.issue]; });
+  live.forEach(function (en) {
+    readSheet_(en.sheet, en.issue).forEach(function (r) { out.push(r); });
   });
   return out;
 }
+
+function readSheet_(sheet, issue) {
+  const out = [];
+  const values = sheet.getDataRange().getDisplayValues();
+  const headerRow = findHeaderRow_(values);
+  if (headerRow < 0) return out;
+
+  const map = buildColumnMap_(values[headerRow]);
+  const meta = readIssueMeta_(values, headerRow);
+
+  for (let i = headerRow + 1; i < values.length; i++) {
+    const row = values[i];
+    const title   = cell_(row, map.title);
+    const section = cell_(row, map.section);
+    const staff   = cell_(row, map.staff);
+    if (!title && !section && !staff) continue;      // 빈 줄
+    if (!staff) continue;                            // 담당 없는 줄은 집계에서 제외
+    // 헤더가 두 줄인 탭이 있어 머리글이 데이터로 새어 나옵니다
+    if (staff === '담당' || title === '콘텐츠' || section === '코너명' || section === '카테고리') continue;
+
+    const page = cell_(row, map.page);
+    out.push({
+      issue: issue,
+      year: meta.year,          // 탭에 연도가 없으면 null (대시보드가 호수로 역산합니다)
+      month: meta.month,
+      day: meta.day,
+      issueLabel: meta.label,
+      page: page,
+      status: /연기/.test(page) ? '연기' : (page ? '게재' : '미정'),
+      section: section,
+      title: title,
+      note: cell_(row, map.note),
+      staff: staff
+    });
+  }
+  return out;
+}
+
+/* ────────────────────────────── 캐시 ────────────────────────────── */
+
+function cacheFile_() {
+  const it = DriveApp.getFilesByName(CACHE_FILENAME);
+  return it.hasNext() ? it.next() : null;
+}
+
+function readCache_() {
+  try {
+    const f = cacheFile_();
+    if (!f) return { rows: [], issues: [] };
+    const c = JSON.parse(f.getBlob().getDataAsString());
+    if (!c || !Array.isArray(c.rows) || !Array.isArray(c.issues)) return { rows: [], issues: [] };
+    return c;
+  } catch (err) {
+    return { rows: [], issues: [] };   // 깨졌으면 없는 셈 치고 다시 만듭니다
+  }
+}
+
+function writeCache_(cache) {
+  const payload = JSON.stringify({ t: new Date().toISOString(), rows: cache.rows, issues: cache.issues });
+  const f = cacheFile_();
+  if (f) f.setContent(payload);
+  else DriveApp.createFile(CACHE_FILENAME, payload, MimeType.PLAIN_TEXT);
+}
+
+/** 지나간 호를 고쳤을 때 한 번 실행하세요. 40초쯤 걸립니다. */
+function rebuildCache() {
+  const rows = collectRows_(true);
+  Logger.log('캐시 새로 만듦: %s꼭지', rows.length);
+}
+
+/* ────────────────────────────── 파싱 ────────────────────────────── */
 
 function cell_(row, idx) {
   return idx === undefined || idx >= row.length ? '' : String(row[idx] || '').trim();
 }
 
-/** 헤더 위쪽 줄에서 "제786호(12월 1일 자)" 같은 제목을 찾아 호수·발행일을 꺼냅니다. */
+/** 헤더 위쪽에서 "제786호(12월 1일 자)" 같은 제목을 찾아 발행일을 꺼냅니다. */
 function readIssueMeta_(values, headerRow) {
   const meta = { label: '', year: null, month: null, day: null };
   for (let i = 0; i < headerRow; i++) {
@@ -115,25 +195,20 @@ function buildColumnMap_(headerCells) {
   return map;
 }
 
-/**
- * 배포 전 점검용. 편집기에서 실행하고 로그를 보세요.
- * 탭이 몇 개인지, 연도가 탭에 적혀 있는지 여기서 확인합니다.
- */
-function testCollect() {
-  const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-  const names = ss.getSheets().map(function (s) { return s.getName(); });
-  Logger.log('탭 %s개: %s', names.length, names.join(', '));
+/* ────────────────────────────── 점검 ────────────────────────────── */
 
-  const rows = collectRows_();
-  const byIssue = {}, byStaff = {}, noYear = [];
-  rows.forEach(function (r) {
-    byIssue[r.issue] = (byIssue[r.issue] || 0) + 1;
-    byStaff[r.staff] = (byStaff[r.staff] || 0) + 1;
-    if (!r.year && noYear.indexOf(r.issue) < 0) noYear.push(r.issue);
-  });
-  Logger.log('총 %s건', rows.length);
-  Logger.log('호별 건수: %s', JSON.stringify(byIssue));
-  Logger.log('담당자별 건수: %s', JSON.stringify(byStaff));
-  Logger.log('연도가 안 적힌 호: %s', JSON.stringify(noYear));
+/** 편집기에서 실행하고 로그를 보세요. 두 번째 실행부터 빨라지는지 확인용입니다. */
+function testCollect() {
+  const t0 = Date.now();
+  const rows = collectRows_(false);
+  const sec = ((Date.now() - t0) / 1000).toFixed(1);
+
+  const cache = readCache_();
+  const byStaff = {};
+  rows.forEach(function (r) { byStaff[r.staff] = (byStaff[r.staff] || 0) + 1; });
+
+  Logger.log('%s초 걸림 · 총 %s꼭지', sec, rows.length);
+  Logger.log('캐시에 담긴 호: %s개 (최근 %s호는 매번 새로 읽음)', cache.issues.length, LIVE_ISSUES);
+  Logger.log('담당자별: %s', JSON.stringify(byStaff));
   Logger.log('첫 행: %s', JSON.stringify(rows[0]));
 }
