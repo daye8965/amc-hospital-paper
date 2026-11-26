@@ -77,12 +77,12 @@ function collectRows_(forceRebuild) {
   live.forEach(function (en) { isLive[en.issue] = true; });
   const out = cache.rows.filter(function (r) { return !isLive[r.issue]; });
   live.forEach(function (en) {
-    readSheet_(en.sheet, en.issue).forEach(function (r) { out.push(r); });
+    readSheet_(en.sheet, en.issue, true).forEach(function (r) { out.push(r); });
   });
   return out;
 }
 
-function readSheet_(sheet, issue) {
+function readSheet_(sheet, issue, withLegend) {
   const out = [];
   const range = sheet.getDataRange();
   const values = range.getDisplayValues();
@@ -94,6 +94,9 @@ function readSheet_(sheet, issue) {
   // 지면 칸이 세로 병합된 곳(18면에 두 꼭지 등)은 첫 줄에만 값이 들어옵니다.
   // 그대로 두면 아래 줄이 '지면 미정'으로 잘못 잡혀서, 병합 범위를 받아 채웁니다.
   const pageFill = mergedPageValues_(range, values, map.page);
+  const bgs = range.getBackgrounds();                 // 셀 배경색 (시트의 색 표기)
+  const zone = findZone_(values, map.section);        // 표지 ~ 이달의 후원자 구간
+  const legend = legend_(values, bgs);                // 2행 담당자 이름 칸 색
 
   for (let i = headerRow + 1; i < values.length; i++) {
     const row = values[i];
@@ -118,10 +121,49 @@ function readSheet_(sheet, issue) {
       section: section,
       title: title,
       note: cell_(row, map.note),
-      staff: staff
+      staff: staff,
+      zone: !!(zone && i >= zone.start && i <= zone.end),
+      staffBg: colorOf_(bgs, i, map.staff),
+      legend: withLegend ? legend : undefined
     });
   }
   return out;
+}
+
+/** 표지 ~ 이달의 후원자 구간의 행 범위 (없으면 null) */
+function findZone_(values, sectionCol) {
+  if (sectionCol === undefined) return null;
+  let start = -1, end = -1;
+  for (let i = 0; i < values.length; i++) {
+    const v = cell_(values[i], sectionCol);
+    if (start < 0 && v === '표지') start = i;
+    if (start >= 0 && v === '이달의 후원자') { end = i; break; }
+  }
+  return (start >= 0 && end >= start) ? { start: start, end: end } : null;
+}
+
+/** 담당자 이름 → 배경색 (2행의 이름 칸) */
+function legend_(values, bgs) {
+  const out = {};
+  const names = values[1] || [];
+  names.forEach(function (v, j) {
+    const n = String(v || '').trim();
+    const bg = (bgs[1] || [])[j];
+    if (n && n.length <= 4 && bg && !isWhite_(bg)) out[n] = bg;
+  });
+  return out;
+}
+
+/** 해당 칸의 배경색 (흰색이면 빈 값) */
+function colorOf_(bgs, i, col) {
+  if (col === undefined) return '';
+  const bg = (bgs[i] || [])[col];
+  return (bg && !isWhite_(bg)) ? bg : '';
+}
+
+function isWhite_(bg) {
+  const c = String(bg).toLowerCase();
+  return c === '#ffffff' || c === '#fff' || c === '';
 }
 
 /** 병합된 지면 칸을 아래 줄까지 펼칩니다. 행 번호(0부터) → 지면 값 */
