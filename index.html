@@ -641,6 +641,22 @@ function showCacheNotice(ts,state){
   box.style.display='flex';
 }
 
+/* 같은 코너를 띄어쓰기만 다르게 적은 경우를 하나로 합칩니다 (예: "다른 그림 찾기" = "다른그림찾기").
+   띄어쓰기를 뺀 이름이 같으면 가장 많이 쓰인 표기를 씁니다. */
+function canonSections(rows){
+  const cnt={};
+  rows.forEach(function(r){
+    const k=String(r.section||'').replace(/\s+/g,'');
+    cnt[k]=cnt[k]||{};
+    cnt[k][r.section]=(cnt[k][r.section]||0)+1;
+  });
+  const pick={};
+  Object.keys(cnt).forEach(function(k){
+    pick[k]=Object.keys(cnt[k]).sort(function(a,b){return cnt[k][b]-cnt[k][a];})[0];
+  });
+  rows.forEach(function(r){ r.section=pick[String(r.section||'').replace(/\s+/g,'')]; });
+  return rows;
+}
 function buildRows(raw){
   const lgRow=raw.find(function(x){return x&&x.legend;});
   if(lgRow) LEGEND=lgRow.legend;
@@ -682,7 +698,7 @@ async function loadSheetData(){
   if(!ALL_DATA.length){
     fromCache=readCache();
     if(fromCache){
-      ALL_DATA=fromCache.rows;
+      ALL_DATA=canonSections(fromCache.rows);
       console.log('캐시로 먼저 그림:',ALL_DATA.length,'콘텐츠');
       await loadDoctors();
       attributeDepartments();
@@ -694,7 +710,7 @@ async function loadSheetData(){
 
   try{
     const raw=await fetchSheet(3);
-    ALL_DATA=buildRows(raw);
+    ALL_DATA=canonSections(buildRows(raw));
     console.log('로드 완료:',ALL_DATA.length,'콘텐츠 (원본',raw.length,'행)');
     writeCache(ALL_DATA);
     await loadDoctors();
