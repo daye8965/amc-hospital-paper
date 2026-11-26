@@ -178,7 +178,11 @@ footer{text-align:center;padding:1.5rem;font-size:11px;color:var(--text3);border
 .tag-연기{background:#fef0e0;color:#8b4a10}
 .tag-미정{background:#f1f0ec;color:#555}
 .dtable{width:100%;border-collapse:collapse;font-size:13px}
-.dtable thead th{padding:8px 10px;text-align:left;color:var(--text3);font-size:11px;font-weight:600;letter-spacing:.05em;white-space:nowrap;border-bottom:2px solid var(--border)}
+.dtable thead th{padding:8px 10px;text-align:left;color:var(--text3);font-size:11px;font-weight:600;letter-spacing:.05em;white-space:nowrap;border-bottom:2px solid var(--border);cursor:pointer;user-select:none;transition:color .15s}
+.dtable thead th:hover{color:var(--blue)}
+.dtable thead th::after{content:'↕';opacity:.25;margin-left:5px;font-weight:400}
+.dtable thead th.asc::after{content:'↑';opacity:1;color:var(--blue)}
+.dtable thead th.desc::after{content:'↓';opacity:1;color:var(--blue)}
 .dtable tbody tr{border-bottom:1px solid var(--border)}
 .dtable tbody tr:hover{background:var(--surface2)}
 .dtable td{padding:8px 10px;vertical-align:top}
@@ -684,9 +688,18 @@ function show(name){
 /* ── 연도 선택 ──
    한 곳에서 고르면 모든 분석 탭이 같은 기간을 봅니다.
    진행 현황(오늘 기준)과 연도별 비교(연도 간 비교가 목적)는 따르지 않습니다. */
-let curYear='전체';
+let curYear=null;   // 첫 렌더에서 defaultYear() 로 채웁니다
+
+/** 기본은 올해. 올해 발행분이 없으면 가장 최근 연도. */
+function defaultYear(){
+  const ys=dataYears();
+  if(!ys.length) return '전체';
+  const now=String(new Date().getFullYear());
+  return ys.map(String).indexOf(now)>=0 ? now : String(ys[ys.length-1]);
+}
 
 function yearRows(){
+  if(curYear===null) curYear=defaultYear();
   return curYear==='전체' ? ALL_DATA : ALL_DATA.filter(function(r){return String(r.year)===curYear;});
 }
 function yearLabel(){ return curYear==='전체'?'전체 기간':curYear+'년'; }
@@ -699,6 +712,7 @@ function setYear(y){
 }
 
 function buildYearBar(){
+  if(curYear===null) curYear=defaultYear();
   const box=document.getElementById('year-btns');
   box.innerHTML=['전체'].concat(dataYears().map(String)).map(function(y){
     return '<button class="ybtn'+(y===curYear?' active':'')+'" onclick="setYear(\''+y+'\')">'+y+'</button>';
@@ -727,6 +741,14 @@ function initDashboard(){
 /* ══ ⓪ 진행 현황 ══
    오늘 기준으로 아직 발행되지 않은 호 중 가장 가까운 호가 '진행 중'입니다.
    발행일이 지나면 자동으로 다음 호로 넘어갑니다. */
+/** 발행일을 20261201 같은 숫자로. 글자로 정렬하면 9월이 12월보다 뒤로 갑니다. */
+function dateKey(r){ return r.year*10000 + r.month*100 + r.day; }
+/** 지면 '8-9' → 8, '연기'·빈칸은 맨 뒤로 */
+function pageKey(p){
+  const n=parseInt(String(p||''),10);
+  return isNaN(n)?9999:n;
+}
+
 function issueDateObj(issue){
   const d=issueDate(issue);
   return new Date(d.year, d.month-1, d.day);
@@ -775,7 +797,7 @@ function issueBlock(issue, kind){
   const body=sorted.map(function(r){
     const dim=r.status==='게재'?'':' style="background:#fffdf7"';
     return '<tr'+dim+'>'+
-      '<td class="num">'+(r.page||'-')+'</td>'+
+      '<td class="num" data-sort="'+pageKey(r.page)+'">'+(r.page||'-')+'</td>'+
       '<td><span class="tag-type tag-'+r.status+'">'+r.status+'</span></td>'+
       '<td style="white-space:nowrap">'+r.section+'</td>'+
       '<td style="word-break:keep-all">'+(r.title||'<span style="color:var(--text3)">제목 미정</span>')+'</td>'+
@@ -994,14 +1016,14 @@ function renderStTable(){
   tb.innerHTML=rows.slice(0,800).map(function(r){
     return '<tr>'+
       '<td class="num">'+r.issue+'</td>'+
-      '<td class="num">'+r.year+'.'+r.month+'.'+r.day+'</td>'+
-      '<td class="num">'+(r.page||'-')+'</td>'+
+      '<td class="num" data-sort="'+dateKey(r)+'">'+r.year+'.'+r.month+'.'+r.day+'</td>'+
+      '<td class="num" data-sort="'+pageKey(r.page)+'">'+(r.page||'-')+'</td>'+
       '<td><span class="tag-type tag-'+r.status+'">'+r.status+'</span></td>'+
       '<td style="white-space:nowrap">'+r.section+'</td>'+
       '<td style="word-break:keep-all">'+r.title+'</td>'+
       '<td style="font-weight:600;white-space:nowrap">'+r.staffRaw+'</td>'+
     '</tr>';
-  }).join('')+(rows.length>800?'<tr><td colspan="7" style="padding:12px;text-align:center;color:var(--text3)">상위 800꼭지만 표시했습니다 (전체 '+rows.length+'꼭지)</td></tr>':'');
+  }).join('')+(rows.length>800?'<tr data-nosort="1"><td colspan="7" style="padding:12px;text-align:center;color:var(--text3)">상위 800꼭지만 표시했습니다 (전체 '+rows.length+'꼭지)</td></tr>':'');
 }
 
 /* ══ ④ 업무량 분석 ══ */
@@ -1057,12 +1079,15 @@ function drawWorkload(){
 
   const th=function(v){return '<th style="text-align:right">'+v+'</th>';};
   document.getElementById('wl-thead').innerHTML='<tr><th>담당자</th>'+a.sections.map(th).join('')+th('합계')+th('비중')+'</tr>';
-  const td=function(v,b){return '<td class="num"'+(b?' style="font-weight:700;color:var(--text)"':'')+'>'+v+'</td>';};
+  const td=function(v,b){
+    const n=(v==='·')?0:Number(String(v).replace(/[,%]/g,''));
+    return '<td class="num" data-sort="'+(isNaN(n)?0:n)+'"'+(b?' style="font-weight:700;color:var(--text)"':'')+'>'+v+'</td>';
+  };
   document.getElementById('wl-tbody').innerHTML=a.staffs.map(function(s){
     return '<tr><td style="font-weight:600;white-space:nowrap">'+s+'</td>'+
       a.sections.map(function(sec){return td(a.cross[s][sec]?a.cross[s][sec]:'·');}).join('')+
       td(a.staffTotal[s],true)+td(pctA(a.staffTotal[s])+'%')+'</tr>';
-  }).join('')+(a.staffs.length?'<tr style="border-top:2px solid var(--border)"><td style="font-weight:700">합계</td>'+
+  }).join('')+(a.staffs.length?'<tr data-nosort="1" style="border-top:2px solid var(--border)"><td style="font-weight:700">합계</td>'+
     a.sections.map(function(sec){return td(a.secTotal[sec],true);}).join('')+td(a.assign,true)+td('100%',true)+'</tr>':'');
   document.getElementById('wl-empty').style.display=a.staffs.length?'none':'block';
   document.getElementById('wl-table').style.display=a.staffs.length?'table':'none';
@@ -1082,7 +1107,8 @@ function selectSection(name){
   document.getElementById('sec-list-title').textContent='「'+selectedSection+'」 꼭지 목록';
   document.getElementById('sec-list-sub').textContent=rows.length+'꼭지';
   document.getElementById('sec-list-tbody').innerHTML=rows.slice(0,500).map(function(r){
-    return '<tr><td class="num">'+r.issue+'</td><td class="num">'+r.year+'.'+r.month+'.'+r.day+'</td><td class="num">'+(r.page||'-')+'</td>'+
+    return '<tr><td class="num">'+r.issue+'</td><td class="num" data-sort="'+dateKey(r)+'">'+r.year+'.'+r.month+'.'+r.day+'</td>'+
+      '<td class="num" data-sort="'+pageKey(r.page)+'">'+(r.page||'-')+'</td>'+
       '<td style="word-break:keep-all">'+r.title+'</td><td style="font-weight:600;white-space:nowrap">'+r.staffRaw+'</td></tr>';
   }).join('');
   card.style.display='block';
@@ -1230,7 +1256,7 @@ function selectDept(name){
   document.getElementById('dp-list-title').textContent='「'+selectedDept+'」 기사 목록';
   document.getElementById('dp-list-sub').textContent=yearLabel()+' · '+rows.length+'꼭지';
   document.getElementById('dp-list-tbody').innerHTML=rows.slice(0,400).map(function(r){
-    return '<tr><td class="num">'+r.issue+'</td><td class="num">'+r.year+'.'+r.month+'.'+r.day+'</td>'+
+    return '<tr><td class="num">'+r.issue+'</td><td class="num" data-sort="'+dateKey(r)+'">'+r.year+'.'+r.month+'.'+r.day+'</td>'+
       '<td style="white-space:nowrap">'+r.section+'</td>'+
       '<td style="word-break:keep-all">'+r.title+'</td>'+
       '<td style="color:var(--text3);font-size:12px;word-break:keep-all">'+(r.note||'-')+'</td>'+
@@ -1310,6 +1336,46 @@ function drawDept(){
   selectedDept=null;
   document.getElementById('dp-list-card').style.display='none';
 }
+
+/* ══ 표 정렬 ══
+   .dtable 머리글을 누르면 그 열로 정렬합니다. 표는 자주 다시 그려지므로
+   표마다 핸들러를 달지 않고 문서 하나에 위임해 둡니다.
+   보이는 글자로 정렬하면 '2026.9.1' 이 '2026.12.1' 보다 뒤로 가므로,
+   그런 열은 셀에 data-sort 로 정렬용 값을 따로 넣어 둡니다. */
+function sortValue(td){
+  if(!td) return '';
+  const v=td.getAttribute('data-sort');
+  return v!==null ? v : td.textContent.trim();
+}
+
+function sortTable(table, idx, dir){
+  const tbody=table.tBodies[0];
+  if(!tbody) return;
+  // 합계 줄이나 '상위 N개만 표시' 안내 줄은 제자리에 둡니다
+  const rows=[...tbody.rows].filter(function(r){return r.getAttribute('data-nosort')===null;});
+  const fixed=[...tbody.rows].filter(function(r){return r.getAttribute('data-nosort')!==null;});
+  const vals=rows.map(function(r){return sortValue(r.cells[idx]);});
+  const allNum=vals.every(function(v){return v!=='' && !isNaN(Number(String(v).replace(/[,%]/g,'')));});
+  rows.sort(function(a,b){
+    const x=sortValue(a.cells[idx]), y=sortValue(b.cells[idx]);
+    let c;
+    if(allNum) c=Number(String(x).replace(/[,%]/g,''))-Number(String(y).replace(/[,%]/g,''));
+    else c=String(x).localeCompare(String(y),'ko');
+    return dir==='asc'?c:-c;
+  });
+  rows.concat(fixed).forEach(function(r){tbody.appendChild(r);});
+}
+
+document.addEventListener('click', function(e){
+  const th=e.target.closest ? e.target.closest('.dtable thead th') : null;
+  if(!th) return;
+  const table=th.closest('table');
+  const idx=[...th.parentNode.cells].indexOf(th);
+  const dir=th.classList.contains('asc')?'desc':'asc';
+  [...th.parentNode.cells].forEach(function(c){c.classList.remove('asc','desc');});
+  th.classList.add(dir);
+  sortTable(table, idx, dir);
+});
 
 /* ══ PDF ══ */
 let pdfOpt='current';
