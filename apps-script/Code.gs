@@ -14,7 +14,7 @@ const SPREADSHEET_ID = '1A_pBtxztIUlwBl2an8-hWiVHE38lt3_0nS8HsKJ2doQ';
 // 헤더 이름 → 필드. 탭마다 표기가 다를 수 있어 별칭을 둡니다.
 const FIELD_ALIASES = {
   page:    ['지면', '면'],
-  section: ['코너명', '코너', '구분'],
+  section: ['코너명', '코너', '구분', '카테고리'],   // 옛 호는 '카테고리'를 씁니다
   title:   ['콘텐츠', '제목', '내용'],
   note:    ['비고'],
   staff:   ['담당', '담당자']
@@ -50,6 +50,8 @@ function collectRows_() {
       const staff   = cell_(row, map.staff);
       if (!title && !section && !staff) continue;      // 빈 줄
       if (!staff) continue;                            // 담당 없는 줄은 집계에서 제외
+      // 헤더가 두 줄인 탭이 있어 머리글이 데이터로 새어 나옵니다
+      if (staff === '담당' || title === '콘텐츠' || section === '코너명' || section === '카테고리') continue;
 
       const page = cell_(row, map.page);
       out.push({
