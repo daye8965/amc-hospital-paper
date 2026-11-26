@@ -470,24 +470,20 @@ const GOOGLE_APPS_SCRIPT_URLS=[
   'https://script.google.com/macros/s/AKfycbxmZEWCXdn7BVBX-dKe5oy2ZelmTJ22g7AVYrJLQ65ja44YTqcmiwucZqIp3SOvPQbGxg/exec'    // 예비 (담당자 B 계정)
 ];
 const GOOGLE_APPS_SCRIPT_URL=GOOGLE_APPS_SCRIPT_URLS[0];
-/* 편집계획안 시트의 색 표기. 담당자 색은 2행 이름 칸, 지면 칸은 표지~이달의 후원자 구간 전체를 옅은 연두색으로 통일합니다. */
-const STAFF_COLORS={"양광욱":"#FFFF00","김미소":"#D9EAD3","민경준":"#6FA8DC","홍누리":"#FFF2CC","류현철":"#F9CB9C","김서영":"#C9DAF8"};
-const CELL_COLORS={"786":{"조직문화개선활동우수팀사례내지기사없음":"#E2F0D9","전자의무기록시스템2주기인증획득":"#E2F0D9","AI로희귀신장암진단,의사수용도에따라결과차이":"#E2F0D9","귀질환진단AI활용시전공의진단정확도32.2%p↑":"#E2F0D9","러시아의료진에갑상선고주파절제술전수":"#E2F0D9","염증치료제‘린버크’투약초기콜레스테롤관리필요":"#E2F0D9","제1회신경림프과학및수술국제포럼":"#E2F0D9","제38회아산상시상식":"#E2F0D9","췌·담도암심포지엄":"#E2F0D9","희귀난치성신경계질환심포지엄(CADASILSeoul2026)":"#E2F0D9","태아치료센터워크숍":"#E2F0D9","3분기고객칭찬협업·우수직원":"#E2F0D9","영양섭취조사의날":"#E2F0D9","선천성심장병환우회22주년행사":"#E2F0D9","이정신전병원장대담사진없음":"#E2F0D9","최인철교수,이상욱부교수학회서수상":"#E2F0D9","김장한교수대통령표창":"#E2F0D9","심태선교수유한결핵및호흡기학술상v":"#E2F0D9","성경림교수학술선구자상v":"#E2F0D9","심주현교수,최원묵조교수「헤파톨로지」편집위원위촉v":"#E2F0D9","김성훈교수,김우진연구원수상":"#E2F0D9","핵의학과의료진학회서수상":"#E2F0D9","원은정부교수학회서수상":"#E2F0D9","산부인과태아치료센터태아심장센터의료진학회서수상":"#E2F0D9","재활의학과·재활의학팀의료진학회서수상":"#E2F0D9","정혜현조교수분쉬의학상젊은의학자상v":"#E2F0D9","유규상조교수대한신생아학회수상":"#E2F0D9","보직임명":"#E2F0D9","아이디어스페이스전시회":"#E2F0D9","재활사랑나눔행사":"#E2F0D9"},"787":{"2026년10대뉴스":"#E2F0D9","10대뉴스":"#E2F0D9","간경변과혼동되는간혈관질환,진단및예후예측":"#E2F0D9","대동맥판막수술합병증,고혈압등동반질환이중요":"#E2F0D9","혈액검사금식시간과차이거의없어":"#E2F0D9","로봇유방전절제술600례":"#E2F0D9","좌주간부·복합심장중재시술국제학술회의(COMPLEXPCI)":"#E2F0D9","제2회젊은암심포지엄":"#E2F0D9","캄보디아불우환아'닌스브닝'치료":"#E2F0D9","조혈모세포이식과면역세포치료심포지엄":"#E2F0D9","선천성심장병센터심포지엄":"#E2F0D9","로봇수술마취연구심포지엄":"#E2F0D9","감염관리링크인활동보고회":"#E2F0D9","PI활동결과보고회":"#E2F0D9","심장재활워크숍":"#E2F0D9","해외의학자의밤":"#E2F0D9","영양팀김장봉사":"#E2F0D9","청소년을위한자기조절":"#E2F0D9"}};
+/* 편집계획안 시트의 색 표기. 데이터(Apps Script)가 시트 색을 그대로 보내 줍니다.
+   담당자 색: 2행 이름 칸 / 담당 칸 색: 시트 담당 칸 / 지면 칸: 표지~이달의 후원자 구간은 옅은 연두 */
+let LEGEND={};
 function staffBg(name){
-  const c=STAFF_COLORS[name];
+  const c=LEGEND[name];
   return c?'background:'+c+';border-color:rgba(0,0,0,.12);':'';
 }
-const STAFF_CELL_COLORS={"786":{"크리스마스트리~(11/20-22설치,23오픈)":"#D9EAD3"},"787":{"2026년10대뉴스":"#C9DAF8","간경변과혼동되는간혈관질환,진단및예후예측":"#6FA8DC","대동맥판막수술합병증,고혈압등동반질환이중요":"#D9EAD3","혈액검사금식시간과차이거의없어":"#C9DAF8","캄보디아불우환아'닌스브닝'치료":"#F9CB9C","성형외과김영철조교수":"#FFF2CC","연탄봉사":"#D9EAD3"}};
-function staffCellBg(r){
-  const m=STAFF_CELL_COLORS[r.issue]; if(!m) return '';
-  const c=m[String(r.title||'').replace(/\s+/g,'')];
-  return c?';background:'+c+';border-radius:6px':'';
-}
 function pageBg(r){
-  const m=CELL_COLORS[r.issue]; if(!m) return '';
-  const c=m[String(r.title||'').replace(/\s+/g,'')];
-  return c?' style="background:'+c+'"':'';
-}   // 오류 안내의 링크용
+  return r.zone?' style="background:#E2F0D9"':'';
+}
+function staffCellBg(r){
+  return r.staffBg?';background:'+r.staffBg+';border-radius:6px':'';
+}
+   // 오류 안내의 링크용
 let ALL_DATA=[];   // {issue, year, month, day, dateLabel, page, status, section, title, note, staffRaw, staff[]}
 
 const gr='rgba(0,0,0,0.06)', tx='#6b6b65';
@@ -636,6 +632,8 @@ function showCacheNotice(ts,state){
 }
 
 function buildRows(raw){
+  const lgRow=raw.find(function(x){return x&&x.legend;});
+  if(lgRow) LEGEND=lgRow.legend;
   return raw.map(function(row){
     const issue=Number(row.issue);
     const d=issueDate(issue);
@@ -648,7 +646,10 @@ function buildRows(raw){
       title:String(row.title||'').trim(),
       note:String(row.note||'').trim(),
       staffRaw:String(row.staff||'').trim(),
-      staff:staffNames(row.staff)
+      staff:staffNames(row.staff),
+      zone:!!row.zone,
+      staffBg:String(row.staffBg||''),
+      legend:row.legend||null
     };
   }).filter(function(r){
     // 호수가 없거나 머리글이 섞여 온 줄은 버립니다
