@@ -90,6 +90,9 @@ function readSheet_(sheet, issue) {
 
   const map = buildColumnMap_(values[headerRow]);
   const meta = readIssueMeta_(values, headerRow);
+  // 지면 칸이 세로 병합된 곳(18면에 두 꼭지 등)은 첫 줄에만 값이 들어옵니다.
+  // 그대로 두면 아래 줄이 '지면 미정'으로 잘못 잡혀서, 병합 범위를 받아 채웁니다.
+  const pageFill = mergedPageValues_(sheet, values, map.page);
 
   for (let i = headerRow + 1; i < values.length; i++) {
     const row = values[i];
@@ -101,7 +104,7 @@ function readSheet_(sheet, issue) {
     // 헤더가 두 줄인 탭이 있어 머리글이 데이터로 새어 나옵니다
     if (staff === '담당' || title === '콘텐츠' || section === '코너명' || section === '카테고리') continue;
 
-    const page = cell_(row, map.page);
+    const page = (pageFill[i] !== undefined) ? pageFill[i] : cell_(row, map.page);
     out.push({
       issue: issue,
       year: meta.year,          // 탭에 연도가 없으면 null (대시보드가 호수로 역산합니다)
@@ -117,6 +120,21 @@ function readSheet_(sheet, issue) {
     });
   }
   return out;
+}
+
+/** 병합된 지면 칸을 아래 줄까지 펼칩니다. 행 번호(0부터) → 지면 값 */
+function mergedPageValues_(sheet, values, pageCol) {
+  const fill = {};
+  if (pageCol === undefined) return fill;
+  const col1 = pageCol + 1;                      // getMergedRanges 는 1부터 셉니다
+  sheet.getMergedRanges().forEach(function (rng) {
+    if (rng.getColumn() > col1 || rng.getLastColumn() < col1) return;
+    const first = rng.getRow() - 1, last = rng.getLastRow() - 1;
+    const v = String((values[first] || [])[pageCol] || '').trim();
+    if (!v) return;
+    for (let r = first; r <= last; r++) fill[r] = v;
+  });
+  return fill;
 }
 
 /* ────────────────────────────── 캐시 ────────────────────────────── */

@@ -211,7 +211,7 @@ footer{text-align:center;padding:1.5rem;font-size:11px;color:var(--text3);border
     </div>
     <div class="pdf-option" id="opt-all" onclick="selectOpt('all')">
       <div class="pdf-option-icon">📚</div>
-      <div><div class="pdf-option-label">전체 탭 모두</div><div class="pdf-option-desc">5개 탭 전부 순서대로 저장</div></div>
+      <div><div class="pdf-option-label">전체 탭 모두</div><div class="pdf-option-desc">6개 탭 전부 순서대로 저장</div></div>
     </div>
     <div class="pdf-modal-actions">
       <button class="pdf-cancel" onclick="closePdfModal()">취소</button>
@@ -225,7 +225,8 @@ footer{text-align:center;padding:1.5rem;font-size:11px;color:var(--text3);border
 </div>
 
 <nav class="nav">
-  <button class="tab active" onclick="show('overview')">📊 전체 현황</button>
+  <button class="tab active" onclick="show('current')">📋 진행 현황</button>
+  <button class="tab" onclick="show('overview')">📊 전체 현황</button>
   <button class="tab" onclick="show('compare')">📈 연도별 비교</button>
   <button class="tab" onclick="show('staff')">👥 담당자 현황</button>
   <button class="tab" onclick="show('workload')">⚖️ 업무량 분석</button>
@@ -259,8 +260,13 @@ footer{text-align:center;padding:1.5rem;font-size:11px;color:var(--text3);border
   </div>
 </div>
 
+<!-- ⓪ 진행 현황 -->
+<section class="sec active" id="sec-current">
+  <div id="cur-blocks"></div>
+</section>
+
 <!-- ① 전체 현황 -->
-<section class="sec active" id="sec-overview">
+<section class="sec" id="sec-overview">
   <div class="mrow" id="ov-metrics"></div>
   <div class="card">
     <div class="ctitle">호별 꼭지 수 추이</div>
@@ -413,8 +419,8 @@ const GOOGLE_APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbzARRoZl7y
 let ALL_DATA=[];   // {issue, year, month, day, dateLabel, page, status, section, title, note, staffRaw, staff[]}
 
 const gr='rgba(0,0,0,0.06)', tx='#6b6b65';
-const tabOrder=['overview','compare','staff','workload','section'];
-const tabNames=['전체 현황','연도별 비교','담당자 현황','업무량 분석','코너 분석'];
+const tabOrder=['current','overview','compare','staff','workload','section'];
+const tabNames=['진행 현황','전체 현황','연도별 비교','담당자 현황','업무량 분석','코너 분석'];
 const drawn={};
 
 /* ── 호수 → 발행일 ──
@@ -622,6 +628,7 @@ function show(name){
   document.getElementById('sec-'+name).classList.add('active');
   document.querySelectorAll('.tab')[tabOrder.indexOf(name)].classList.add('active');
   if(!drawn[name]){
+    if(name==='current') drawCurrent();
     if(name==='overview') drawOverview();
     if(name==='compare') drawCompare();
     if(name==='staff') drawStaff();
@@ -636,8 +643,108 @@ function initDashboard(){
   Object.keys(drawn).forEach(function(k){delete drawn[k];});
   const ys=dataYears();
   document.getElementById('h-range').textContent=ys.length?ys[0]+'–'+ys[ys.length-1]:'-';
-  show('overview');
+  show('current');   // 지금 만들고 있는 호를 먼저 보여줍니다
   console.log('대시보드 초기화 완료');
+}
+
+/* ══ ⓪ 진행 현황 ══
+   오늘 기준으로 아직 발행되지 않은 호 중 가장 가까운 호가 '진행 중'입니다.
+   발행일이 지나면 자동으로 다음 호로 넘어갑니다. */
+function issueDateObj(issue){
+  const d=issueDate(issue);
+  return new Date(d.year, d.month-1, d.day);
+}
+
+function pipeline(){
+  const issues=[...new Set(ALL_DATA.map(function(r){return r.issue;}))].sort(function(a,b){return a-b;});
+  if(!issues.length) return {current:null, next:null};
+  const today=new Date(); today.setHours(0,0,0,0);
+  const upcoming=issues.filter(function(i){return issueDateObj(i)>=today;});
+  if(!upcoming.length) return {current:issues[issues.length-1], next:null};
+  return {current:upcoming[0], next:upcoming.length>1?upcoming[1]:null};
+}
+
+function dday(issue){
+  const today=new Date(); today.setHours(0,0,0,0);
+  const n=Math.round((issueDateObj(issue)-today)/86400000);
+  if(n===0) return '오늘 발행';
+  return n>0 ? 'D-'+n : '발행 '+(-n)+'일 지남';
+}
+
+function issueBlock(issue, kind){
+  const rows=ALL_DATA.filter(function(r){return r.issue===issue;});
+  const d=issueDate(issue);
+  const st={게재:0,연기:0,미정:0};
+  const byStaff={};
+  rows.forEach(function(r){
+    st[r.status]=(st[r.status]||0)+1;
+    r.staff.forEach(function(s){byStaff[s]=(byStaff[s]||0)+1;});
+  });
+  const people=Object.keys(byStaff).sort(function(a,b){return byStaff[b]-byStaff[a];});
+
+  const chips=people.map(function(s){
+    return '<span class="scard" style="padding:.45rem .8rem;font-size:12px;white-space:nowrap">'+
+      '<strong>'+s+'</strong> <span style="color:var(--text3)">'+byStaff[s]+'</span></span>';
+  }).join('');
+
+  // 지면이 안 잡힌 꼭지를 위로 올립니다 — 지금 챙겨야 하는 것들입니다
+  const order={미정:0, 연기:1, 게재:2};
+  const sorted=rows.slice().sort(function(a,b){
+    if(order[a.status]!==order[b.status]) return order[a.status]-order[b.status];
+    const pa=parseInt(a.page,10), pb=parseInt(b.page,10);
+    return (isNaN(pa)?999:pa)-(isNaN(pb)?999:pb);
+  });
+
+  const body=sorted.map(function(r){
+    const dim=r.status==='게재'?'':' style="background:#fffdf7"';
+    return '<tr'+dim+'>'+
+      '<td class="num">'+(r.page||'-')+'</td>'+
+      '<td><span class="tag-type tag-'+r.status+'">'+r.status+'</span></td>'+
+      '<td style="white-space:nowrap">'+r.section+'</td>'+
+      '<td style="word-break:keep-all">'+(r.title||'<span style="color:var(--text3)">제목 미정</span>')+'</td>'+
+      '<td style="color:var(--text3);font-size:12px;word-break:keep-all">'+(r.note||'-')+'</td>'+
+      '<td style="font-weight:600;white-space:nowrap">'+r.staffRaw+'</td>'+
+    '</tr>';
+  }).join('');
+
+  const badge=kind==='current'
+    ? '<span class="badge bo">진행 중</span>'
+    : '<span class="badge bi">다음 호</span>';
+
+  return '<div class="card">'+
+    '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:1rem">'+
+      '<div>'+
+        '<div class="ctitle">'+badge+' &nbsp;제'+issue+'호 · '+d.year+'년 '+d.month+'월 '+d.day+'일 자</div>'+
+        '<div class="csub" style="margin-bottom:0">'+dday(issue)+' · 총 '+rows.length+'꼭지 · 담당 '+people.length+'명</div>'+
+      '</div>'+
+      '<div style="display:flex;gap:8px;flex-wrap:wrap;font-size:12px">'+
+        '<span class="scard" style="padding:.45rem .8rem">지면 확정 <strong>'+(st['게재']||0)+'</strong></span>'+
+        '<span class="scard" style="padding:.45rem .8rem;'+((st['미정']||0)?'border-color:var(--amber);color:var(--amber)':'')+'">지면 미정 <strong>'+(st['미정']||0)+'</strong></span>'+
+        '<span class="scard" style="padding:.45rem .8rem;'+((st['연기']||0)?'border-color:#8b2020;color:#8b2020':'')+'">연기 <strong>'+(st['연기']||0)+'</strong></span>'+
+      '</div>'+
+    '</div>'+
+    '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1.25rem">'+chips+'</div>'+
+    '<div style="overflow-x:auto"><table class="dtable">'+
+      '<thead><tr><th>지면</th><th>상태</th><th>코너</th><th style="width:45%">콘텐츠</th><th style="width:25%">비고</th><th>담당</th></tr></thead>'+
+      '<tbody>'+body+'</tbody>'+
+    '</table></div>'+
+  '</div>';
+}
+
+function drawCurrent(){
+  const p=pipeline();
+  const wrap=document.getElementById('cur-blocks');
+  if(!p.current){
+    wrap.innerHTML='<div class="card" style="color:var(--text3)">표시할 호가 없습니다</div>';
+    return;
+  }
+  let html=issueBlock(p.current,'current');
+  if(p.next) html+=issueBlock(p.next,'next');
+  else html+='<div class="card" style="color:var(--text3);font-size:13px">다음 호 탭이 아직 시트에 없습니다</div>';
+  html+='<div style="font-size:12px;color:var(--text3);line-height:1.7;padding:0 .25rem">'+
+    '오늘 기준으로 아직 발행되지 않은 호 중 가장 가까운 호를 진행 중으로 봅니다. 발행일이 지나면 자동으로 넘어갑니다.<br>'+
+    '<strong>지면 미정</strong>은 편집계획안에 지면 칸이 비어 있는 꼭지, <strong>연기</strong>는 지면 칸이 "연기"인 꼭지입니다. 둘 다 위로 올려 두었습니다.</div>';
+  wrap.innerHTML=html;
 }
 
 /* ══ ① 전체 현황 ══ */
