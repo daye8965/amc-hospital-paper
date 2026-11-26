@@ -864,7 +864,7 @@ function issueBlock(issue, kind){
       '<td class="num" data-sort="'+pageKey(r.page)+'"'+pageBg(r)+'>'+(r.page||'-')+'</td>'+
       '<td><span class="tag-type tag-'+r.status+'">'+r.status+'</span></td>'+
       '<td style="word-break:keep-all;overflow-wrap:anywhere">'+r.section+'</td>'+
-      '<td style="word-break:keep-all;overflow-wrap:anywhere">'+(r.title||'<span style="color:var(--text3)">제목 미정</span>')+'</td>'+
+      '<td style="word-break:keep-all;overflow-wrap:anywhere">'+((r.title&&r.title!=='제목 미정')?r.title:'<span style="color:var(--text3)">-</span>')+'</td>'+
       '<td style="color:var(--text3);font-size:12px;word-break:keep-all;overflow-wrap:anywhere">'+(r.note||'-')+'</td>'+
       '<td style="font-weight:600;word-break:keep-all;overflow-wrap:anywhere;text-align:center;vertical-align:middle'+staffCellBg(r)+'">'+r.staffRaw+'</td>'+
     '</tr>';
