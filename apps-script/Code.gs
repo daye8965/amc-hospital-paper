@@ -84,7 +84,8 @@ function collectRows_(forceRebuild) {
 
 function readSheet_(sheet, issue) {
   const out = [];
-  const values = sheet.getDataRange().getDisplayValues();
+  const range = sheet.getDataRange();
+  const values = range.getDisplayValues();
   const headerRow = findHeaderRow_(values);
   if (headerRow < 0) return out;
 
@@ -92,7 +93,7 @@ function readSheet_(sheet, issue) {
   const meta = readIssueMeta_(values, headerRow);
   // 지면 칸이 세로 병합된 곳(18면에 두 꼭지 등)은 첫 줄에만 값이 들어옵니다.
   // 그대로 두면 아래 줄이 '지면 미정'으로 잘못 잡혀서, 병합 범위를 받아 채웁니다.
-  const pageFill = mergedPageValues_(sheet, values, map.page);
+  const pageFill = mergedPageValues_(range, values, map.page);
 
   for (let i = headerRow + 1; i < values.length; i++) {
     const row = values[i];
@@ -123,11 +124,12 @@ function readSheet_(sheet, issue) {
 }
 
 /** 병합된 지면 칸을 아래 줄까지 펼칩니다. 행 번호(0부터) → 지면 값 */
-function mergedPageValues_(sheet, values, pageCol) {
+function mergedPageValues_(range, values, pageCol) {
   const fill = {};
   if (pageCol === undefined) return fill;
   const col1 = pageCol + 1;                      // getMergedRanges 는 1부터 셉니다
-  sheet.getMergedRanges().forEach(function (rng) {
+  // getMergedRanges 는 Sheet 가 아니라 Range 의 메서드입니다
+  range.getMergedRanges().forEach(function (rng) {
     if (rng.getColumn() > col1 || rng.getLastColumn() < col1) return;
     const first = rng.getRow() - 1, last = rng.getLastRow() - 1;
     const v = String((values[first] || [])[pageCol] || '').trim();
