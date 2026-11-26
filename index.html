@@ -294,7 +294,7 @@ footer{text-align:center;padding:1.5rem;font-size:11px;color:var(--text3);border
     </div>
   </div>
 
-  <div style="margin:44px 0 22px;padding-top:26px;border-top:2px solid #cbd5e1;display:flex;align-items:center;gap:12px;flex-wrap:wrap"><h2 style="font-size:22px;font-weight:700;letter-spacing:-0.02em;margin:0">연도별 비교</h2><span style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:20px;background:#e0f2fe;color:#0369a1">항상 전체 기간</span><div style="font-size:12px;color:var(--text3);width:100%;margin-top:-4px">연도 선택과 관계없이 전체 기간을 비교합니다.</div></div>
+  <div style="margin:2.5rem 0 1rem"><div style="font-size:18px;font-weight:700;letter-spacing:-0.02em">연도별 비교</div><div style="font-size:12px;color:var(--text3)">항상 전체 기간을 봅니다</div></div>
   <div class="cmp-grid" id="cmp-cards"></div>
   <div class="card">
     <div class="ctitle">연도별 코너 구성</div>
@@ -1051,7 +1051,7 @@ function drawStaff(){
   destroyChart('c-staff-trend');
   new Chart(document.getElementById('c-staff-trend'),{
     type:'line',
-    data:{labels:ys.map(String),datasets:top6.map(function(name,i){return {label:name,data:ys.map(function(y){return map[name][y]||0;}),borderColor:secColor(i),fill:false,tension:.35,pointRadius:4,pointBackgroundColor:secColor(i),borderDash:DASH[i]};})},
+    data:{labels:ys.map(String),datasets:top6.map(function(name,i){return {label:name,data:ys.map(function(y){return map[name][y]||0;}),borderColor:secColor(i),fill:false,showLine:curYear==='전체',tension:.35,pointRadius:4,pointBackgroundColor:secColor(i),borderDash:DASH[i]};})},
     options:{responsive:true,maintainAspectRatio:false,animation:false,
       plugins:{legend:{position:'bottom',labels:{color:tx,font:{size:11},padding:10,boxWidth:12}}},
       scales:{x:{grid:{display:false},ticks:{color:tx}},y:{grid:{color:gr},ticks:{color:tx},beginAtZero:true}}}
