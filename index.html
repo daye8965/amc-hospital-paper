@@ -17,13 +17,17 @@
 }
 body{font-family:'Segoe UI','Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.6;font-weight:500}
 
-.header{background:linear-gradient(135deg, #0f172a 0%, #1e293b 100%);color:#fff;padding:2rem 2.5rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;box-shadow:0 1px 3px rgba(0,0,0,0.1)}
-.header h1{font-size:24px;font-weight:700;letter-spacing:-0.03em;margin:0}
-.header p{font-size:13px;opacity:.75;margin-top:4px;font-weight:400}
-.header-right{display:flex;align-items:center;gap:10px}
-.hbadge{background:rgba(255,255,255,.15);border:1px solid rgba(255,255,255,.25);border-radius:20px;padding:5px 14px;font-size:11px;font-family:'DM Mono',monospace;letter-spacing:.05em}
-.pdf-btn{display:flex;align-items:center;gap:7px;padding:8px 16px;border-radius:8px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.3);color:#fff;font-size:13px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .2s;white-space:nowrap}
-.pdf-btn:hover{background:rgba(255,255,255,.28)}
+/* 머리말 — 다른 페이지 안에 끼워 넣어도 튀지 않게 밝은 바탕으로 둡니다.
+   어두운 띠를 쓰면 감싸는 페이지와 경계가 생겨 '박혀 있는' 느낌이 납니다. */
+.header{background:var(--surface);color:var(--text);padding:1.5rem 2.5rem 1.25rem;display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;border-bottom:1px solid var(--border)}
+.header h1{font-size:20px;font-weight:700;letter-spacing:-0.02em;margin:0;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.header p{font-size:13px;color:var(--text2);margin-top:6px;font-weight:400}
+.header .hmeta{font-size:12px;color:var(--text3);margin-top:3px;font-weight:400}
+.header-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.hbadge{background:#e6f4eb;color:#1a472a;border:1px solid #bfe0cc;border-radius:20px;padding:4px 11px;font-size:11px;font-weight:600;letter-spacing:.02em;white-space:nowrap}
+.hbadge.range{background:var(--surface2);color:var(--text2);border-color:var(--border);font-family:'DM Mono',monospace}
+.pdf-btn{display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:8px;background:var(--surface2);border:1px solid var(--border);color:var(--text2);font-size:13px;font-weight:600;cursor:pointer;font-family:'Noto Sans KR',sans-serif;transition:all .2s;white-space:nowrap}
+.pdf-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--surface)}
 .pdf-btn:active{transform:scale(0.97)}
 
 .nav{background:var(--surface);border-bottom:1px solid var(--border);padding:0 2.5rem;display:flex;overflow-x:auto;box-shadow:0 1px 2px rgba(0,0,0,0.02)}
@@ -167,7 +171,7 @@ footer{text-align:center;padding:1.5rem;font-size:11px;color:var(--text3);border
 #staff-table td:last-child{color:var(--text3);font-size:12px;white-space:nowrap}
 
 @media(max-width:1024px){.mrow{grid-template-columns:repeat(3,1fr)}.cmp-grid{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:768px){.mrow{grid-template-columns:repeat(2,1fr)}.g2,.g3{grid-template-columns:1fr}.sgrid{grid-template-columns:repeat(2,1fr)}.cmp-grid{grid-template-columns:repeat(2,1fr)}.main{padding:1.25rem 1rem}.header{padding:1.25rem 1rem;flex-direction:column;align-items:flex-start;gap:10px}.nav{padding:0 1rem}}
+@media(max-width:768px){.mrow{grid-template-columns:repeat(2,1fr)}.g2,.g3{grid-template-columns:1fr}.sgrid{grid-template-columns:repeat(2,1fr)}.cmp-grid{grid-template-columns:repeat(2,1fr)}.main{padding:1.25rem 1rem}.header{padding:1.25rem 1rem;flex-direction:column;align-items:flex-start;gap:10px}.header h1{font-size:18px}.nav{padding:0 1rem}}
 </style>
 <style>
 /* 병원보 전용 */
@@ -206,11 +210,17 @@ body{font-size:15px}
 
 <header class="header">
   <div>
-    <h1>병원보 업무 분석 대시보드</h1>
-    <p>서울아산병원 홍보팀 · 편집계획안 기준 · 대시보드 제작: 이다예 · 김미소</p>
+    <h1>병원보 업무 분석 대시보드 <span class="hbadge">🟢 내부 공유용</span></h1>
+    <p>서울아산병원 홍보팀 · 편집계획안 기준 · 격주간 발행</p>
+    <div class="hmeta">대시보드 제작: 이다예 · 김미소</div>
+    <div class="hmeta" id="h-updated">마지막 불러옴: -</div>
   </div>
   <div class="header-right">
-    <div class="hbadge" id="h-range">-</div>
+    <div class="hbadge range" id="h-range">-</div>
+    <a class="pdf-btn" id="sheet-btn" href="#" target="_blank" rel="noopener" style="text-decoration:none">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+      시트 열기
+    </a>
     <button class="pdf-btn" onclick="openPdfModal()">
       <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
       PDF 저장
@@ -472,6 +482,12 @@ body{font-size:15px}
    그 계정이 막히면 대시보드가 통째로 멈추므로, 다른 담당자 계정에도 같은 스크립트를
    배포해 두 번째 줄에 적어 두세요. 그러면 손댈 필요 없이 알아서 넘어갑니다.
    (추가 방법은 HANDOVER.md 0번 참고) */
+/* 원본 편집계획안. 머리말의 '시트 열기' 와 호별 링크가 여기를 가리킵니다.
+   호마다 탭이 다르므로 gid 를 알면 그 호 탭으로 바로 갑니다. gid 는 Apps Script 가
+   같이 내려주는데, 옛 배포에는 없을 수 있어 없을 때는 시트 첫 화면으로 엽니다. */
+const SHEET_URL='https://docs.google.com/spreadsheets/d/1A_pBtxztIUlwBl2an8-hWiVHE38lt3_0nS8HsKJ2doQ/edit';
+function sheetLink(gid){ return gid?SHEET_URL+'#gid='+gid:SHEET_URL; }
+
 const GOOGLE_APPS_SCRIPT_URLS=[
   'https://script.google.com/macros/s/AKfycbzARRoZl7y1WLrLiwnlmOqvwrmXZqnMrjGkyPi2tlqQDMrLdErp39_tBN4nBVetAuFzxA/exec',   // 주  (담당자 A 계정)
   'https://script.google.com/macros/s/AKfycbxmZEWCXdn7BVBX-dKe5oy2ZelmTJ22g7AVYrJLQ65ja44YTqcmiwucZqIp3SOvPQbGxg/exec'    // 예비 (담당자 B 계정)
@@ -671,6 +687,7 @@ function buildRows(raw){
       section:section,
       title:String(row.title||'').trim(),
       note:String(row.note||'').trim(),
+      gid:row.gid||null,
       staffRaw:String(row.staff||'').trim(),
       staff:staffNames(row.staff),
       zone:!!row.zone,
@@ -703,6 +720,7 @@ async function loadSheetData(){
       await loadDoctors();
       attributeDepartments();
       initDashboard();
+      setUpdated(fromCache.t, true);
       showCacheNotice(fromCache.t,'checking');
     }
   }
@@ -715,6 +733,7 @@ async function loadSheetData(){
     writeCache(ALL_DATA);
     await loadDoctors();
     attributeDepartments();
+    setUpdated(Date.now(), false);
     if(fromCache) redrawCurrentTab(); else initDashboard();
     showCacheNotice(0,null);
     showLoadError(null);
@@ -793,11 +812,30 @@ function syncYearBar(tab){
 }
 function destroyChart(id){const c=Chart.getChart(id); if(c) c.destroy();}
 
+/** 머리말의 '마지막 불러옴'. 캐시로 그렸을 때와 방금 받았을 때를 구분해 적습니다. */
+function setUpdated(ts, fromCache){
+  const el=document.getElementById('h-updated');
+  if(!el) return;
+  const d=new Date(ts);
+  const p=function(n){return String(n).padStart(2,'0');};
+  el.textContent='마지막 불러옴: '+d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+
+    ' '+p(d.getHours())+':'+p(d.getMinutes())+(fromCache?' (저장해 둔 데이터)':'');
+}
+
 function initDashboard(){
   Object.keys(drawn).forEach(function(k){delete drawn[k];});
   const ys=dataYears();
   document.getElementById('h-range').textContent=ys.length?ys[0]+'–'+ys[ys.length-1]:'-';
   buildYearBar();
+  // 머리말 버튼은 진행 중인 호의 탭으로 바로 갑니다
+  const pl=pipeline();
+  const curRow=pl.current?ALL_DATA.find(function(r){return r.issue===pl.current;}):null;
+  const curGid=curRow&&curRow.gid;
+  const sbtn=document.getElementById('sheet-btn');
+  if(sbtn){
+    sbtn.href=sheetLink(curGid);
+    sbtn.title=curGid?('제'+pl.current+'호 탭으로 엽니다'):'편집계획안을 엽니다 (호 탭으로 바로 가려면 Apps Script 재배포 필요)';
+  }
   show('current');   // 지금 만들고 있는 호를 먼저 보여줍니다
   console.log('대시보드 초기화 완료');
 }
@@ -870,6 +908,12 @@ function issueBlock(issue, kind){
     '</tr>';
   }).join('');
 
+  const gid=rows.length?rows[0].gid:null;
+  const link='<a href="'+sheetLink(gid)+'" target="_blank" rel="noopener" '+
+    'style="font-size:12px;color:var(--blue);text-decoration:none;white-space:nowrap" '+
+    'title="'+(gid?('제'+issue+'호 탭을 새 창에서 엽니다'):'편집계획안을 새 창에서 엽니다')+'">'+
+    (gid?'제'+issue+'호 시트 열기':'시트 열기')+' ↗</a>';
+
   const badge=kind==='current'
     ? '<span class="badge bo">진행 중</span>'
     : (kind==='selected' ? '<span class="badge bo" style="background:#e0f2fe;color:#0369a1">선택한 호</span>' : '<span class="badge bi">다음 호</span>');
@@ -878,7 +922,7 @@ function issueBlock(issue, kind){
     '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:1rem">'+
       '<div>'+
         '<div class="ctitle">'+badge+' &nbsp;제'+issue+'호 · '+d.year+'년 '+d.month+'월 '+d.day+'일 자</div>'+
-        '<div class="csub" style="margin-bottom:0">'+dday(issue)+' · 총 '+rows.length+'콘텐츠 · 담당 '+people.length+'명</div>'+
+        '<div class="csub" style="margin-bottom:0">'+dday(issue)+' · 총 '+rows.length+'콘텐츠 · 담당 '+people.length+'명 &nbsp;'+link+'</div>'+
       '</div>'+
       '<div style="display:flex;gap:8px;flex-wrap:wrap;font-size:12px">'+
         '<span class="scard" style="padding:.45rem .8rem">지면 확정 <strong>'+(st['게재']||0)+'</strong></span>'+
