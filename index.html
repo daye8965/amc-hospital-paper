@@ -198,10 +198,6 @@ footer{text-align:center;padding:1.5rem;font-size:11px;color:var(--text3);border
   </div>
   <div class="header-right">
     <div class="hbadge" id="h-range">-</div>
-    <a class="pdf-btn" id="sheet-btn" href="#" target="_blank" rel="noopener" style="text-decoration:none">
-      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-      시트 열기
-    </a>
     <button class="pdf-btn" onclick="openPdfModal()">
       <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
       PDF 저장
@@ -469,18 +465,23 @@ footer{text-align:center;padding:1.5rem;font-size:11px;color:var(--text3);border
    그 계정이 막히면 대시보드가 통째로 멈추므로, 다른 담당자 계정에도 같은 스크립트를
    배포해 두 번째 줄에 적어 두세요. 그러면 손댈 필요 없이 알아서 넘어갑니다.
    (추가 방법은 HANDOVER.md 0번 참고) */
-/* 원본 편집계획안. 헤더의 '시트 열기' 와 호별 링크가 여기를 가리킵니다.
-   호마다 탭이 다르므로 gid 를 알면 그 호 탭으로 바로 갑니다.
-   gid 는 Apps Script 가 같이 내려주는데(없으면 시트 첫 화면으로 열립니다),
-   옛 배포에는 없을 수 있어 없을 때도 동작하게 해 두었습니다. */
-const SHEET_URL='https://docs.google.com/spreadsheets/d/1A_pBtxztIUlwBl2an8-hWiVHE38lt3_0nS8HsKJ2doQ/edit';
-function sheetLink(gid){ return gid?SHEET_URL+'#gid='+gid:SHEET_URL; }
-
 const GOOGLE_APPS_SCRIPT_URLS=[
   'https://script.google.com/macros/s/AKfycbzARRoZl7y1WLrLiwnlmOqvwrmXZqnMrjGkyPi2tlqQDMrLdErp39_tBN4nBVetAuFzxA/exec',   // 주  (담당자 A 계정)
   'https://script.google.com/macros/s/AKfycbxmZEWCXdn7BVBX-dKe5oy2ZelmTJ22g7AVYrJLQ65ja44YTqcmiwucZqIp3SOvPQbGxg/exec'    // 예비 (담당자 B 계정)
 ];
-const GOOGLE_APPS_SCRIPT_URL=GOOGLE_APPS_SCRIPT_URLS[0];   // 오류 안내의 링크용
+const GOOGLE_APPS_SCRIPT_URL=GOOGLE_APPS_SCRIPT_URLS[0];
+/* 편집계획안 시트의 색 표기. 담당자 색은 2행 이름 칸, 지면 색은 지면 칸 배경색입니다. (호별: 콘텐츠 제목 기준) */
+const STAFF_COLORS={"양광욱":"#FFFF00","김미소":"#D9EAD3","민경준":"#6FA8DC","홍누리":"#FFF2CC","류현철":"#F9CB9C","김서영":"#C9DAF8"};
+const CELL_COLORS={"786":{"전자의무기록시스템2주기인증획득":"#E6B8AF","귀질환진단AI활용시전공의진단정확도32.2%p↑":"#F9CB9C","염증치료제‘린버크’투약초기콜레스테롤관리필요":"#FFE599","제38회아산상시상식":"#B6D7A8","췌·담도암심포지엄":"#C9DAF8","3분기고객칭찬협업·우수직원":"#6FA8DC","아이디어스페이스전시회":"#C27BA0","세계에서가장영향력있는연구자선정(김성배사진/강윤구,김상위사진없음/최세훈확인후게재)":"#D9D2E9"},"787":{"2026년10대뉴스":"#D9EAD3","10대뉴스":"#D9EAD3","간경변과혼동되는간혈관질환,진단및예후예측":"#D9EAD3","혈액검사금식시간과차이거의없어":"#D9EAD3","좌주간부·복합심장중재시술국제학술회의(COMPLEXPCI)":"#D9EAD3","캄보디아불우환아'닌스브닝'치료":"#D9EAD3","로봇수술마취연구심포지엄":"#D9EAD3","심장재활워크숍":"#D9EAD3","영양팀김장봉사":"#D9EAD3"}};
+function staffSwatch(name){
+  const c=STAFF_COLORS[name];
+  return c?'<span title="'+name+'" style="display:inline-block;width:12px;height:12px;border-radius:3px;background:'+c+';border:1px solid rgba(0,0,0,.15);margin-left:6px;vertical-align:middle"></span>':'';
+}
+function pageBg(r){
+  const m=CELL_COLORS[r.issue]; if(!m) return '';
+  const c=m[String(r.title||'').replace(/\s+/g,'')];
+  return c?' style="background:'+c+';font-weight:700"':'';
+}   // 오류 안내의 링크용
 let ALL_DATA=[];   // {issue, year, month, day, dateLabel, page, status, section, title, note, staffRaw, staff[]}
 
 const gr='rgba(0,0,0,0.06)', tx='#6b6b65';
@@ -640,7 +641,6 @@ function buildRows(raw){
       section:section,
       title:String(row.title||'').trim(),
       note:String(row.note||'').trim(),
-      gid:row.gid||null,
       staffRaw:String(row.staff||'').trim(),
       staff:staffNames(row.staff)
     };
@@ -769,13 +769,6 @@ function initDashboard(){
   const ys=dataYears();
   document.getElementById('h-range').textContent=ys.length?ys[0]+'–'+ys[ys.length-1]:'-';
   buildYearBar();
-  // 헤더 버튼은 진행 중인 호의 탭으로 바로 갑니다
-  const p=pipeline();
-  const cur=p.current?ALL_DATA.find(function(r){return r.issue===p.current;}):null;
-  const btn=document.getElementById('sheet-btn');
-  const curGid=cur&&cur.gid;
-  btn.href=sheetLink(curGid);
-  btn.title=curGid?('제'+p.current+'호 탭으로 엽니다'):'편집계획안을 엽니다 (호 탭으로 바로 가려면 Apps Script 재배포 필요)';
   show('current');   // 지금 만들고 있는 호를 먼저 보여줍니다
   console.log('대시보드 초기화 완료');
 }
@@ -825,7 +818,7 @@ function issueBlock(issue, kind){
 
   const chips=people.map(function(s){
     return '<span class="scard" style="padding:.45rem .8rem;font-size:12px;white-space:nowrap">'+
-      '<strong>'+s+'</strong> <span style="color:var(--text3)">'+byStaff[s]+'</span></span>';
+      '<strong>'+s+'</strong>'+staffSwatch(s)+' <span style="color:var(--text3)">'+byStaff[s]+'</span></span>';
   }).join('');
 
   // 지면이 안 잡힌 콘텐츠를 위로 올립니다 — 지금 챙겨야 하는 것들입니다
@@ -839,7 +832,7 @@ function issueBlock(issue, kind){
   const body=sorted.map(function(r){
     const dim=r.status==='게재'?'':' style="background:#fffdf7"';
     return '<tr'+dim+'>'+
-      '<td class="num" data-sort="'+pageKey(r.page)+'">'+(r.page||'-')+'</td>'+
+      '<td class="num" data-sort="'+pageKey(r.page)+'"'+pageBg(r)+'>'+(r.page||'-')+'</td>'+
       '<td><span class="tag-type tag-'+r.status+'">'+r.status+'</span></td>'+
       '<td style="white-space:nowrap">'+r.section+'</td>'+
       '<td style="word-break:keep-all">'+(r.title||'<span style="color:var(--text3)">제목 미정</span>')+'</td>'+
@@ -851,17 +844,12 @@ function issueBlock(issue, kind){
   const badge=kind==='current'
     ? '<span class="badge bo">진행 중</span>'
     : '<span class="badge bi">다음 호</span>';
-  const gid=rows.length?rows[0].gid:null;
-  const link='<a href="'+sheetLink(gid)+'" target="_blank" rel="noopener" '+
-    'style="font-size:12px;color:var(--blue);text-decoration:none;white-space:nowrap" '+
-    'title="'+(gid?('제'+issue+'호 탭을 새 창에서 엽니다'):'편집계획안을 새 창에서 엽니다')+'">'+
-    (gid?'제'+issue+'호 시트 열기':'시트 열기')+' ↗</a>';
 
   return '<div class="card">'+
     '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:1rem">'+
       '<div>'+
         '<div class="ctitle">'+badge+' &nbsp;제'+issue+'호 · '+d.year+'년 '+d.month+'월 '+d.day+'일 자</div>'+
-        '<div class="csub" style="margin-bottom:0">'+dday(issue)+' · 총 '+rows.length+'콘텐츠 · 담당 '+people.length+'명 &nbsp;'+link+'</div>'+
+        '<div class="csub" style="margin-bottom:0">'+dday(issue)+' · 총 '+rows.length+'콘텐츠 · 담당 '+people.length+'명</div>'+
       '</div>'+
       '<div style="display:flex;gap:8px;flex-wrap:wrap;font-size:12px">'+
         '<span class="scard" style="padding:.45rem .8rem">지면 확정 <strong>'+(st['게재']||0)+'</strong></span>'+
