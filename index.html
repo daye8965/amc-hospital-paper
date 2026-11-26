@@ -860,9 +860,8 @@ function drawCurrent(){
     wrap.innerHTML='<div class="card" style="color:var(--text3)">표시할 호가 없습니다</div>';
     return;
   }
-  let html=issueBlock(p.current,'current');
-  if(p.next) html+=issueBlock(p.next,'next');
-  else html+='<div class="card" style="color:var(--text3);font-size:13px">다음 호 탭이 아직 시트에 없습니다</div>';
+  const nextHtml=p.next ? issueBlock(p.next,'next') : '<div class="card" style="color:var(--text3);font-size:13px">다음 호 탭이 아직 시트에 없습니다</div>';
+  let html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;margin-bottom:1.25rem">'+issueBlock(p.current,'current')+nextHtml+'</div>';
   html+='<div style="font-size:12px;color:var(--text3);line-height:1.7;padding:0 .25rem">'+
     '오늘 기준으로 아직 발행되지 않은 호 중 가장 가까운 호를 진행 중으로 봅니다. 발행일이 지나면 자동으로 넘어갑니다.<br>'+
     '<strong>지면 미정</strong>은 편집계획안에 지면 칸이 비어 있는 콘텐츠, <strong>연기</strong>는 지면 칸이 "연기"인 콘텐츠입니다. 둘 다 위로 올려 두었습니다.</div>';
