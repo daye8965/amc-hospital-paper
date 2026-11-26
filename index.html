@@ -870,7 +870,7 @@ function issueBlock(issue, kind){
     '</div>'+
     '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1.25rem">'+chips+'</div>'+
     '<div style="overflow-x:auto"><table class="dtable" style="table-layout:fixed;width:100%">'+
-      '<colgroup><col style="width:8%"><col style="width:9%"><col style="width:12%"><col style="width:33%"><col style="width:22%"><col style="width:16%"></colgroup>'+
+      '<colgroup><col style="width:8%"><col style="width:9%"><col style="width:12%"><col style="width:35%"><col style="width:25%"><col style="width:11%"></colgroup>'+
       '<thead><tr><th style="text-align:center">지면</th><th>상태</th><th>코너</th><th>콘텐츠</th><th>비고</th><th style="text-align:center">담당</th></tr></thead>'+
       '<tbody>'+body+'</tbody>'+
     '</table></div>'+
@@ -920,12 +920,12 @@ function drawCurrent(){
     return '<option value="'+i+'"'+(i===sel?' selected':'')+'>제'+i+'호 · '+d.year+'년 '+d.month+'월 '+d.day+'일'+(i===p.current?' (진행 중)':'')+'</option>';
   }).join('');
   const btn='padding:7px 14px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;color:var(--text)';
-  const nav='<div class="card" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:1.25rem;padding:1rem 1.25rem">'+
+  const nav='<div class="card" style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;margin-bottom:1.25rem;padding:1rem 1.25rem">'+
     '<button style="'+btn+'" onclick="stepCurIssue(-1)">◀ 이전 호</button>'+
     '<select style="'+btn+';min-width:260px" onchange="setCurIssue(this.value)">'+opts+'</select>'+
     '<button style="'+btn+'" onclick="stepCurIssue(1)">다음 호 ▶</button>'+
     '<button style="'+btn+'" onclick="setCurIssue(null)">오늘 기준</button>'+
-    '<span style="margin-left:auto;font-size:12px;color:var(--text3)">왼쪽은 선택한 호, 오른쪽은 그 다음 호입니다</span>'+
+    '<span style="width:100%;text-align:center;font-size:12px;color:var(--text3)">왼쪽은 선택한 호, 오른쪽은 그 다음 호입니다</span>'+
     '</div>';
   let html=nav+'<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:2.5rem;align-items:start;margin-bottom:1.25rem">'+leftHtml+rightHtml+'</div>';
   html+='<div style="font-size:12px;color:var(--text3);line-height:1.7;padding:0 .25rem">'+
