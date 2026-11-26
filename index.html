@@ -810,7 +810,7 @@ function issueBlock(issue, kind){
   }).join('');
 
   // 지면이 안 잡힌 콘텐츠를 위로 올립니다 — 지금 챙겨야 하는 것들입니다
-  const order={미정:0, 연기:1, 게재:2};
+  const order={게재:0, 미정:1, 연기:2};
   const sorted=rows.slice().sort(function(a,b){
     if(order[a.status]!==order[b.status]) return order[a.status]-order[b.status];
     const pa=parseInt(a.page,10), pb=parseInt(b.page,10);
@@ -854,6 +854,12 @@ function issueBlock(issue, kind){
 }
 
 function drawCurrent(){
+  if(!document.getElementById('cur-full-style')){
+    const st=document.createElement('style');
+    st.id='cur-full-style';
+    st.textContent='.main:has(#sec-current.active){max-width:none}';
+    document.head.appendChild(st);
+  }
   const p=pipeline();
   const wrap=document.getElementById('cur-blocks');
   if(!p.current){
@@ -861,7 +867,7 @@ function drawCurrent(){
     return;
   }
   const nextHtml=p.next ? issueBlock(p.next,'next') : '<div class="card" style="color:var(--text3);font-size:13px">다음 호 탭이 아직 시트에 없습니다</div>';
-  let html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start;margin-bottom:1.25rem">'+issueBlock(p.current,'current')+nextHtml+'</div>';
+  let html='<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:2.5rem;align-items:start;margin-bottom:1.25rem">'+issueBlock(p.current,'current')+nextHtml+'</div>';
   html+='<div style="font-size:12px;color:var(--text3);line-height:1.7;padding:0 .25rem">'+
     '오늘 기준으로 아직 발행되지 않은 호 중 가장 가까운 호를 진행 중으로 봅니다. 발행일이 지나면 자동으로 넘어갑니다.<br>'+
     '<strong>지면 미정</strong>은 편집계획안에 지면 칸이 비어 있는 콘텐츠, <strong>연기</strong>는 지면 칸이 "연기"인 콘텐츠입니다. 둘 다 위로 올려 두었습니다.</div>';
