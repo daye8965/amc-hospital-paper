@@ -477,8 +477,11 @@ function staffBg(name){
   const c=LEGEND[name];
   return c?'background:'+c+';border-color:rgba(0,0,0,.12);':'';
 }
+const GREEN_SECTIONS=['표지','뉴스','이달의후원자','동정','단신','인사'];
 function pageBg(r){
-  return r.zone?' style="background:#E2F0D9"':'';
+  const sec=String(r.section||'').replace(/\s+/g,'');
+  const green=!!r.zone || GREEN_SECTIONS.indexOf(sec)>=0;
+  return ' style="text-align:center;vertical-align:middle'+(green?';background:#E2F0D9':'')+'"';
 }
 function staffCellBg(r){
   return r.staffBg?';background:'+r.staffBg+';border-radius:6px':'';
@@ -842,10 +845,10 @@ function issueBlock(issue, kind){
     return '<tr'+dim+'>'+
       '<td class="num" data-sort="'+pageKey(r.page)+'"'+pageBg(r)+'>'+(r.page||'-')+'</td>'+
       '<td><span class="tag-type tag-'+r.status+'">'+r.status+'</span></td>'+
-      '<td style="white-space:nowrap">'+r.section+'</td>'+
-      '<td style="word-break:keep-all">'+(r.title||'<span style="color:var(--text3)">제목 미정</span>')+'</td>'+
-      '<td style="color:var(--text3);font-size:12px;word-break:keep-all">'+(r.note||'-')+'</td>'+
-      '<td style="font-weight:600;white-space:nowrap;text-align:center;vertical-align:middle'+staffCellBg(r)+'">'+r.staffRaw+'</td>'+
+      '<td style="word-break:keep-all;overflow-wrap:anywhere">'+r.section+'</td>'+
+      '<td style="word-break:keep-all;overflow-wrap:anywhere">'+(r.title||'<span style="color:var(--text3)">제목 미정</span>')+'</td>'+
+      '<td style="color:var(--text3);font-size:12px;word-break:keep-all;overflow-wrap:anywhere">'+(r.note||'-')+'</td>'+
+      '<td style="font-weight:600;word-break:keep-all;overflow-wrap:anywhere;text-align:center;vertical-align:middle'+staffCellBg(r)+'">'+r.staffRaw+'</td>'+
     '</tr>';
   }).join('');
 
@@ -866,8 +869,9 @@ function issueBlock(issue, kind){
       '</div>'+
     '</div>'+
     '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1.25rem">'+chips+'</div>'+
-    '<div style="overflow-x:auto"><table class="dtable">'+
-      '<thead><tr><th>지면</th><th>상태</th><th>코너</th><th style="width:45%">콘텐츠</th><th style="width:25%">비고</th><th>담당</th></tr></thead>'+
+    '<div style="overflow-x:auto"><table class="dtable" style="table-layout:fixed;width:100%">'+
+      '<colgroup><col style="width:8%"><col style="width:9%"><col style="width:12%"><col style="width:33%"><col style="width:22%"><col style="width:16%"></colgroup>'+
+      '<thead><tr><th style="text-align:center">지면</th><th>상태</th><th>코너</th><th>콘텐츠</th><th>비고</th><th style="text-align:center">담당</th></tr></thead>'+
       '<tbody>'+body+'</tbody>'+
     '</table></div>'+
   '</div>';
