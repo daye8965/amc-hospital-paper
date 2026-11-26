@@ -231,7 +231,6 @@ footer{text-align:center;padding:1.5rem;font-size:11px;color:var(--text3);border
 <nav class="nav">
   <button class="tab active" onclick="show('current')">📋 진행 현황</button>
   <button class="tab" onclick="show('overview')">📊 전체 현황</button>
-  <button class="tab" onclick="show('compare')">📈 연도별 비교</button>
   <button class="tab" onclick="show('staff')">👥 담당자 현황</button>
   <button class="tab" onclick="show('workload')">⚖️ 업무량 분석</button>
   <button class="tab" onclick="show('section')">🗂️ 코너 분석</button>
@@ -294,10 +293,8 @@ footer{text-align:center;padding:1.5rem;font-size:11px;color:var(--text3);border
       <div class="cwrap" style="height:280px"><canvas id="c-section-pie" role="img" aria-label="코너 구성 도넛 차트"></canvas></div>
     </div>
   </div>
-</section>
 
-<!-- ② 연도별 비교 -->
-<section class="sec" id="sec-compare">
+  <div style="margin:2.5rem 0 1rem"><div style="font-size:18px;font-weight:700;letter-spacing:-0.02em">연도별 비교</div><div style="font-size:12px;color:var(--text3)">항상 전체 기간을 봅니다</div></div>
   <div class="cmp-grid" id="cmp-cards"></div>
   <div class="card">
     <div class="ctitle">연도별 코너 구성</div>
@@ -315,6 +312,9 @@ footer{text-align:center;padding:1.5rem;font-size:11px;color:var(--text3);border
     </div>
   </div>
 </section>
+
+<!-- ② 연도별 비교 -->
+
 
 <!-- ③ 담당자 현황 -->
 <section class="sec" id="sec-staff">
@@ -484,10 +484,10 @@ function staffCellBg(r){
 let ALL_DATA=[];   // {issue, year, month, day, dateLabel, page, status, section, title, note, staffRaw, staff[]}
 
 const gr='rgba(0,0,0,0.06)', tx='#6b6b65';
-const tabOrder=['current','overview','compare','staff','workload','section','dept'];
-const tabNames=['진행 현황','전체 현황','연도별 비교','담당자 현황','업무량 분석','코너 분석','부서 분석'];
+const tabOrder=['current','overview','staff','workload','section','dept'];
+const tabNames=['진행 현황','전체 현황','담당자 현황','업무량 분석','코너 분석','부서 분석'];
 // 연도 선택을 따르지 않는 탭 (진행 현황은 오늘 기준, 연도별 비교는 연도 비교가 목적)
-const YEAR_FREE_TABS=['current','compare'];
+const YEAR_FREE_TABS=['current'];
 const drawn={};
 
 /* ── 호수 → 발행일 ──
@@ -712,8 +712,7 @@ function show(name){
   document.querySelectorAll('.tab')[tabOrder.indexOf(name)].classList.add('active');
   if(!drawn[name]){
     if(name==='current') drawCurrent();
-    if(name==='overview') drawOverview();
-    if(name==='compare') drawCompare();
+    if(name==='overview'){ drawOverview(); drawCompare(); }
     if(name==='staff') drawStaff();
     if(name==='workload') drawWorkload();
     if(name==='section') drawSection();
@@ -760,7 +759,7 @@ function syncYearBar(tab){
   document.getElementById('year-btns').style.opacity=free?'.35':'1';
   document.getElementById('year-btns').style.pointerEvents=free?'none':'auto';
   document.getElementById('year-note').textContent=free
-    ? (tab==='current'?'진행 현황은 오늘 기준이라 연도 선택을 따르지 않습니다':'연도별 비교는 항상 전체 기간을 봅니다')
+    ? (tab==='current'?'진행 현황은 오늘 기준이라 연도 선택을 따르지 않습니다':yearLabel()+' 기준으로 보고 있습니다')
     : yearLabel()+' 기준으로 보고 있습니다';
 }
 function destroyChart(id){const c=Chart.getChart(id); if(c) c.destroy();}
