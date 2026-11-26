@@ -320,7 +320,7 @@ footer{text-align:center;padding:1.5rem;font-size:11px;color:var(--text3);border
 <section class="sec" id="sec-staff">
   <div class="card">
     <div class="ctitle">담당자별 연도 추이</div>
-    <div class="csub">콘텐츠 수 상위 6인</div>
+    <div class="csub">콘텐츠 수 상위 8인</div>
     <div class="cwrap" style="height:300px"><canvas id="c-staff-trend" role="img" aria-label="담당자별 연도 추이 선 차트"></canvas></div>
   </div>
   <div class="card">
@@ -1031,30 +1031,6 @@ function syncStBtns(){
   document.querySelectorAll('#st-staff-btns .staff-sel-btn').forEach(function(b){b.classList.toggle('active',b.textContent===stStaff);});
 }
 
-/* 담당자 현황: 특정 연도를 고르면 X축은 담당자, Y축은 그 해 건수 (막대 + 숫자) */
-function drawStaffBar(top6,map){
-  const valueLabel={id:'valueLabel',afterDatasetsDraw:function(c){
-    const ctx=c.ctx;
-    c.data.datasets.forEach(function(ds,di){
-      c.getDatasetMeta(di).data.forEach(function(bar,i){
-        const v=ds.data[i]; if(!v) return;
-        ctx.save();
-        ctx.fillStyle=tx; ctx.font='600 13px sans-serif';
-        ctx.textAlign='center'; ctx.textBaseline='bottom';
-        ctx.fillText(String(v),bar.x,bar.y-4);
-        ctx.restore();
-      });
-    });
-  }};
-  new Chart(document.getElementById('c-staff-trend'),{
-    type:'bar',
-    data:{labels:top6,datasets:[{label:curYear+'년 콘텐츠 수',data:top6.map(function(n){return map[n][curYear]||0;}),backgroundColor:top6.map(function(n,i){return secColor(i);}),borderRadius:6,maxBarThickness:70}]},
-    options:{responsive:true,maintainAspectRatio:false,animation:false,
-      plugins:{legend:{display:false}},
-      scales:{x:{grid:{display:false},ticks:{color:tx,font:{size:12,weight:'600'}}},y:{grid:{color:gr},ticks:{color:tx},beginAtZero:true,title:{display:true,text:'건수',color:tx}}}},
-    plugins:[valueLabel]
-  });
-}
 function drawStaff(){
   const D=yearRows();
   const ys=dataYears();
@@ -1070,10 +1046,10 @@ function drawStaff(){
     .sort(function(a,b){
       const sum=function(o){return Object.keys(o).reduce(function(n,k){return n+o[k];},0);};
       return sum(map[b])-sum(map[a]);
-    }).slice(0,6);
+    }).slice(0,8);
   const DASH=[[],[5,3],[],[3,3],[],[2,2]];
   destroyChart('c-staff-trend');
-  if(curYear!=='전체'){ drawStaffBar(top6,map); } else new Chart(document.getElementById('c-staff-trend'),{
+  new Chart(document.getElementById('c-staff-trend'),{
     type:'line',
     data:{labels:ys.map(String),datasets:top6.map(function(name,i){return {label:name,data:ys.map(function(y){return map[name][y]||0;}),borderColor:secColor(i),fill:false,showLine:curYear==='전체',tension:.35,pointRadius:4,pointBackgroundColor:secColor(i),borderDash:DASH[i]};})},
     options:{responsive:true,maintainAspectRatio:false,animation:false,
