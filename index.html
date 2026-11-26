@@ -470,17 +470,17 @@ const GOOGLE_APPS_SCRIPT_URLS=[
   'https://script.google.com/macros/s/AKfycbxmZEWCXdn7BVBX-dKe5oy2ZelmTJ22g7AVYrJLQ65ja44YTqcmiwucZqIp3SOvPQbGxg/exec'    // 예비 (담당자 B 계정)
 ];
 const GOOGLE_APPS_SCRIPT_URL=GOOGLE_APPS_SCRIPT_URLS[0];
-/* 편집계획안 시트의 색 표기. 담당자 색은 2행 이름 칸, 지면 색은 지면 칸 배경색입니다. (호별: 콘텐츠 제목 기준) */
+/* 편집계획안 시트의 색 표기. 담당자 색은 2행 이름 칸, 지면 칸은 표지~이달의 후원자 구간 전체를 옅은 연두색으로 통일합니다. */
 const STAFF_COLORS={"양광욱":"#FFFF00","김미소":"#D9EAD3","민경준":"#6FA8DC","홍누리":"#FFF2CC","류현철":"#F9CB9C","김서영":"#C9DAF8"};
-const CELL_COLORS={"786":{"전자의무기록시스템2주기인증획득":"#E6B8AF","귀질환진단AI활용시전공의진단정확도32.2%p↑":"#F9CB9C","염증치료제‘린버크’투약초기콜레스테롤관리필요":"#FFE599","제38회아산상시상식":"#B6D7A8","췌·담도암심포지엄":"#C9DAF8","3분기고객칭찬협업·우수직원":"#6FA8DC","아이디어스페이스전시회":"#C27BA0","세계에서가장영향력있는연구자선정(김성배사진/강윤구,김상위사진없음/최세훈확인후게재)":"#D9D2E9"},"787":{"2026년10대뉴스":"#D9EAD3","10대뉴스":"#D9EAD3","간경변과혼동되는간혈관질환,진단및예후예측":"#D9EAD3","혈액검사금식시간과차이거의없어":"#D9EAD3","좌주간부·복합심장중재시술국제학술회의(COMPLEXPCI)":"#D9EAD3","캄보디아불우환아'닌스브닝'치료":"#D9EAD3","로봇수술마취연구심포지엄":"#D9EAD3","심장재활워크숍":"#D9EAD3","영양팀김장봉사":"#D9EAD3"}};
-function staffSwatch(name){
+const CELL_COLORS={"786":{"조직문화개선활동우수팀사례내지기사없음":"#E2F0D9","전자의무기록시스템2주기인증획득":"#E2F0D9","AI로희귀신장암진단,의사수용도에따라결과차이":"#E2F0D9","귀질환진단AI활용시전공의진단정확도32.2%p↑":"#E2F0D9","러시아의료진에갑상선고주파절제술전수":"#E2F0D9","염증치료제‘린버크’투약초기콜레스테롤관리필요":"#E2F0D9","제1회신경림프과학및수술국제포럼":"#E2F0D9","제38회아산상시상식":"#E2F0D9","췌·담도암심포지엄":"#E2F0D9","희귀난치성신경계질환심포지엄(CADASILSeoul2026)":"#E2F0D9","태아치료센터워크숍":"#E2F0D9","3분기고객칭찬협업·우수직원":"#E2F0D9","영양섭취조사의날":"#E2F0D9","선천성심장병환우회22주년행사":"#E2F0D9","이정신전병원장대담사진없음":"#E2F0D9","최인철교수,이상욱부교수학회서수상":"#E2F0D9","김장한교수대통령표창":"#E2F0D9","심태선교수유한결핵및호흡기학술상v":"#E2F0D9","성경림교수학술선구자상v":"#E2F0D9","심주현교수,최원묵조교수「헤파톨로지」편집위원위촉v":"#E2F0D9","김성훈교수,김우진연구원수상":"#E2F0D9","핵의학과의료진학회서수상":"#E2F0D9","원은정부교수학회서수상":"#E2F0D9","산부인과태아치료센터태아심장센터의료진학회서수상":"#E2F0D9","재활의학과·재활의학팀의료진학회서수상":"#E2F0D9","정혜현조교수분쉬의학상젊은의학자상v":"#E2F0D9","유규상조교수대한신생아학회수상":"#E2F0D9","보직임명":"#E2F0D9","아이디어스페이스전시회":"#E2F0D9","재활사랑나눔행사":"#E2F0D9"},"787":{"2026년10대뉴스":"#E2F0D9","10대뉴스":"#E2F0D9","간경변과혼동되는간혈관질환,진단및예후예측":"#E2F0D9","대동맥판막수술합병증,고혈압등동반질환이중요":"#E2F0D9","혈액검사금식시간과차이거의없어":"#E2F0D9","로봇유방전절제술600례":"#E2F0D9","좌주간부·복합심장중재시술국제학술회의(COMPLEXPCI)":"#E2F0D9","제2회젊은암심포지엄":"#E2F0D9","캄보디아불우환아'닌스브닝'치료":"#E2F0D9","조혈모세포이식과면역세포치료심포지엄":"#E2F0D9","선천성심장병센터심포지엄":"#E2F0D9","로봇수술마취연구심포지엄":"#E2F0D9","감염관리링크인활동보고회":"#E2F0D9","PI활동결과보고회":"#E2F0D9","심장재활워크숍":"#E2F0D9","해외의학자의밤":"#E2F0D9","영양팀김장봉사":"#E2F0D9","청소년을위한자기조절":"#E2F0D9"}};
+function staffBg(name){
   const c=STAFF_COLORS[name];
-  return c?'<span title="'+name+'" style="display:inline-block;width:12px;height:12px;border-radius:3px;background:'+c+';border:1px solid rgba(0,0,0,.15);margin-left:6px;vertical-align:middle"></span>':'';
+  return c?'background:'+c+';border-color:rgba(0,0,0,.12);':'';
 }
 function pageBg(r){
   const m=CELL_COLORS[r.issue]; if(!m) return '';
   const c=m[String(r.title||'').replace(/\s+/g,'')];
-  return c?' style="background:'+c+';font-weight:700"':'';
+  return c?' style="background:'+c+'"':'';
 }   // 오류 안내의 링크용
 let ALL_DATA=[];   // {issue, year, month, day, dateLabel, page, status, section, title, note, staffRaw, staff[]}
 
@@ -817,8 +817,8 @@ function issueBlock(issue, kind){
   const people=Object.keys(byStaff).sort(function(a,b){return byStaff[b]-byStaff[a];});
 
   const chips=people.map(function(s){
-    return '<span class="scard" style="padding:.45rem .8rem;font-size:12px;white-space:nowrap">'+
-      '<strong>'+s+'</strong>'+staffSwatch(s)+' <span style="color:var(--text3)">'+byStaff[s]+'</span></span>';
+    return '<span class="scard" style="padding:.45rem .8rem;font-size:12px;white-space:nowrap;'+staffBg(s)+'">'+
+      '<strong>'+s+'</strong> <span style="color:#1e293b;font-weight:600">'+byStaff[s]+'</span></span>';
   }).join('');
 
   // 지면이 안 잡힌 콘텐츠를 위로 올립니다 — 지금 챙겨야 하는 것들입니다
