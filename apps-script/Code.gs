@@ -108,6 +108,7 @@ function readSheet_(sheet, issue) {
     const page = (pageFill[i] !== undefined) ? pageFill[i] : cell_(row, map.page);
     out.push({
       issue: issue,
+      gid: sheet.getSheetId(),   // 대시보드에서 그 호 탭으로 바로 열기 위해
       year: meta.year,          // 탭에 연도가 없으면 null (대시보드가 호수로 역산합니다)
       month: meta.month,
       day: meta.day,
