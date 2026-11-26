@@ -762,6 +762,7 @@ function buildYearBar(){
 }
 
 function syncYearBar(tab){
+  document.getElementById('year-bar').style.display=(tab==='current')?'none':'flex';
   const free=YEAR_FREE_TABS.indexOf(tab)>=0;
   document.getElementById('year-btns').style.opacity=free?'.35':'1';
   document.getElementById('year-btns').style.pointerEvents=free?'none':'auto';
@@ -844,13 +845,13 @@ function issueBlock(issue, kind){
       '<td style="white-space:nowrap">'+r.section+'</td>'+
       '<td style="word-break:keep-all">'+(r.title||'<span style="color:var(--text3)">제목 미정</span>')+'</td>'+
       '<td style="color:var(--text3);font-size:12px;word-break:keep-all">'+(r.note||'-')+'</td>'+
-      '<td style="font-weight:600;white-space:nowrap'+staffCellBg(r)+'">'+r.staffRaw+'</td>'+
+      '<td style="font-weight:600;white-space:nowrap;text-align:center;vertical-align:middle'+staffCellBg(r)+'">'+r.staffRaw+'</td>'+
     '</tr>';
   }).join('');
 
   const badge=kind==='current'
     ? '<span class="badge bo">진행 중</span>'
-    : '<span class="badge bi">다음 호</span>';
+    : (kind==='selected' ? '<span class="badge bo" style="background:#e0f2fe;color:#0369a1">선택한 호</span>' : '<span class="badge bi">다음 호</span>');
 
   return '<div class="card">'+
     '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:1rem">'+
@@ -872,6 +873,23 @@ function issueBlock(issue, kind){
   '</div>';
 }
 
+let CUR_ISSUE=null;   // 진행 현황에서 고른 호 (null이면 오늘 기준 진행 중인 호)
+function allIssues(){
+  return [...new Set(ALL_DATA.map(function(r){return r.issue;}))].sort(function(a,b){return a-b;});
+}
+function setCurIssue(n){
+  CUR_ISSUE=(n===null||n===''||isNaN(Number(n))) ? null : Number(n);
+  drawCurrent();
+}
+function stepCurIssue(d){
+  const list=allIssues();
+  const base=(CUR_ISSUE==null) ? pipeline().current : CUR_ISSUE;
+  const i=list.indexOf(base);
+  if(i<0) return;
+  const j=i+d;
+  if(j<0||j>=list.length) return;
+  setCurIssue(list[j]);
+}
 function drawCurrent(){
   if(!document.getElementById('cur-full-style')){
     const st=document.createElement('style');
@@ -885,8 +903,27 @@ function drawCurrent(){
     wrap.innerHTML='<div class="card" style="color:var(--text3)">표시할 호가 없습니다</div>';
     return;
   }
-  const nextHtml=p.next ? issueBlock(p.next,'next') : '<div class="card" style="color:var(--text3);font-size:13px">다음 호 탭이 아직 시트에 없습니다</div>';
-  let html='<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:2.5rem;align-items:start;margin-bottom:1.25rem">'+issueBlock(p.current,'current')+nextHtml+'</div>';
+  const list=allIssues();
+  const sel=(CUR_ISSUE!=null && list.indexOf(CUR_ISSUE)>=0) ? CUR_ISSUE : p.current;
+  const idx=list.indexOf(sel);
+  const nxt=(idx>=0 && idx+1<list.length) ? list[idx+1] : null;
+  const leftHtml=issueBlock(sel, sel===p.current ? 'current' : 'selected');
+  const rightHtml=nxt!=null
+    ? issueBlock(nxt, nxt===p.current ? 'current' : 'next')
+    : '<div class="card" style="color:var(--text3);font-size:13px">다음 호가 아직 없습니다</div>';
+  const opts=list.slice().reverse().map(function(i){
+    const d=issueDate(i);
+    return '<option value="'+i+'"'+(i===sel?' selected':'')+'>제'+i+'호 · '+d.year+'년 '+d.month+'월 '+d.day+'일'+(i===p.current?' (진행 중)':'')+'</option>';
+  }).join('');
+  const btn='padding:7px 14px;border:1px solid var(--border);border-radius:8px;background:var(--surface2);cursor:pointer;font-size:13px;font-weight:600;font-family:inherit;color:var(--text)';
+  const nav='<div class="card" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:1.25rem;padding:1rem 1.25rem">'+
+    '<button style="'+btn+'" onclick="stepCurIssue(-1)">◀ 이전 호</button>'+
+    '<select style="'+btn+';min-width:260px" onchange="setCurIssue(this.value)">'+opts+'</select>'+
+    '<button style="'+btn+'" onclick="stepCurIssue(1)">다음 호 ▶</button>'+
+    '<button style="'+btn+'" onclick="setCurIssue(null)">오늘 기준</button>'+
+    '<span style="margin-left:auto;font-size:12px;color:var(--text3)">왼쪽은 선택한 호, 오른쪽은 그 다음 호입니다</span>'+
+    '</div>';
+  let html=nav+'<div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:2.5rem;align-items:start;margin-bottom:1.25rem">'+leftHtml+rightHtml+'</div>';
   html+='<div style="font-size:12px;color:var(--text3);line-height:1.7;padding:0 .25rem">'+
     '오늘 기준으로 아직 발행되지 않은 호 중 가장 가까운 호를 진행 중으로 봅니다. 발행일이 지나면 자동으로 넘어갑니다.<br>'+
     '<strong>지면 미정</strong>은 편집계획안에 지면 칸이 비어 있는 콘텐츠, <strong>연기</strong>는 지면 칸이 "연기"인 콘텐츠입니다. 둘 다 위로 올려 두었습니다.</div>';
