@@ -194,7 +194,7 @@ footer{text-align:center;padding:1.5rem;font-size:11px;color:var(--text3);border
 <header class="header">
   <div>
     <h1>병원보 업무 분석 대시보드</h1>
-    <p>서울아산병원 홍보팀 · 편집계획안 기준 · 대시보드 제작: 김미소</p>
+    <p>서울아산병원 홍보팀 · 편집계획안 기준 · 대시보드 제작: 이다예 · 김미소</p>
   </div>
   <div class="header-right">
     <div class="hbadge" id="h-range">-</div>
@@ -730,10 +730,7 @@ let curYear=null;   // 첫 렌더에서 defaultYear() 로 채웁니다
 
 /** 기본은 올해. 올해 발행분이 없으면 가장 최근 연도. */
 function defaultYear(){
-  const ys=dataYears();
-  if(!ys.length) return '전체';
-  const now=String(new Date().getFullYear());
-  return ys.map(String).indexOf(now)>=0 ? now : String(ys[ys.length-1]);
+  return '전체';   // 처음 열면 전체 기간을 봅니다
 }
 
 function yearRows(){
