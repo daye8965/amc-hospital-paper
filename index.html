@@ -477,6 +477,12 @@ function staffBg(name){
   const c=STAFF_COLORS[name];
   return c?'background:'+c+';border-color:rgba(0,0,0,.12);':'';
 }
+const STAFF_CELL_COLORS={"786":{"크리스마스트리~(11/20-22설치,23오픈)":"#D9EAD3"},"787":{"2026년10대뉴스":"#C9DAF8","간경변과혼동되는간혈관질환,진단및예후예측":"#6FA8DC","대동맥판막수술합병증,고혈압등동반질환이중요":"#D9EAD3","혈액검사금식시간과차이거의없어":"#C9DAF8","캄보디아불우환아'닌스브닝'치료":"#F9CB9C","성형외과김영철조교수":"#FFF2CC","연탄봉사":"#D9EAD3"}};
+function staffCellBg(r){
+  const m=STAFF_CELL_COLORS[r.issue]; if(!m) return '';
+  const c=m[String(r.title||'').replace(/\s+/g,'')];
+  return c?';background:'+c+';border-radius:6px':'';
+}
 function pageBg(r){
   const m=CELL_COLORS[r.issue]; if(!m) return '';
   const c=m[String(r.title||'').replace(/\s+/g,'')];
@@ -837,7 +843,7 @@ function issueBlock(issue, kind){
       '<td style="white-space:nowrap">'+r.section+'</td>'+
       '<td style="word-break:keep-all">'+(r.title||'<span style="color:var(--text3)">제목 미정</span>')+'</td>'+
       '<td style="color:var(--text3);font-size:12px;word-break:keep-all">'+(r.note||'-')+'</td>'+
-      '<td style="font-weight:600;white-space:nowrap">'+r.staffRaw+'</td>'+
+      '<td style="font-weight:600;white-space:nowrap'+staffCellBg(r)+'">'+r.staffRaw+'</td>'+
     '</tr>';
   }).join('');
 
