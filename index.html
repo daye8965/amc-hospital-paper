@@ -211,7 +211,7 @@ footer{text-align:center;padding:1.5rem;font-size:11px;color:var(--text3);border
     </div>
     <div class="pdf-option" id="opt-all" onclick="selectOpt('all')">
       <div class="pdf-option-icon">📚</div>
-      <div><div class="pdf-option-label">전체 탭 모두</div><div class="pdf-option-desc">6개 탭 전부 순서대로 저장</div></div>
+      <div><div class="pdf-option-label">전체 탭 모두</div><div class="pdf-option-desc">7개 탭 전부 순서대로 저장</div></div>
     </div>
     <div class="pdf-modal-actions">
       <button class="pdf-cancel" onclick="closePdfModal()">취소</button>
@@ -231,9 +231,16 @@ footer{text-align:center;padding:1.5rem;font-size:11px;color:var(--text3);border
   <button class="tab" onclick="show('staff')">👥 담당자 현황</button>
   <button class="tab" onclick="show('workload')">⚖️ 업무량 분석</button>
   <button class="tab" onclick="show('section')">🗂️ 코너 분석</button>
+  <button class="tab" onclick="show('dept')">🏥 부서 분석</button>
 </nav>
 
 <main class="main">
+
+<div id="year-bar" style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:1.5rem;padding:.9rem 1.25rem;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);box-shadow:0 1px 2px rgba(0,0,0,0.03)">
+  <span style="font-size:12px;font-weight:700;letter-spacing:.06em;color:var(--text3)">연도</span>
+  <div style="display:flex;gap:6px;flex-wrap:wrap" id="year-btns"></div>
+  <span id="year-note" style="font-size:12px;color:var(--text3);margin-left:auto"></span>
+</div>
 
 <div id="load-status" style="display:flex;align-items:center;gap:14px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:1.25rem 1.5rem;margin-bottom:1.5rem;box-shadow:0 1px 3px rgba(0,0,0,0.04)">
   <div class="load-spinner"></div>
@@ -318,7 +325,6 @@ footer{text-align:center;padding:1.5rem;font-size:11px;color:var(--text3);border
         <div class="ctitle">꼭지 목록</div>
         <div class="csub" style="margin-bottom:0">담당자·연도·코너로 걸러서 봅니다</div>
       </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap" id="st-yr-btns"></div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem" id="st-staff-btns"></div>
     <div id="st-summary" style="display:flex;align-items:center;gap:16px;padding:12px 14px;background:var(--surface2);border-radius:8px;margin-bottom:1.25rem;font-size:13px;flex-wrap:wrap">
@@ -344,15 +350,6 @@ footer{text-align:center;padding:1.5rem;font-size:11px;color:var(--text3);border
 <!-- ④ 업무량 분석 -->
 <section class="sec" id="sec-workload">
   <div class="mrow" id="wl-metrics"></div>
-  <div class="card" style="margin-bottom:1.5rem">
-    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
-      <div>
-        <div class="ctitle">기간 선택</div>
-        <div class="csub" style="margin-bottom:0">선택한 연도 기준으로 아래가 모두 다시 계산됩니다</div>
-      </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap" id="wl-yr-btns"></div>
-    </div>
-  </div>
   <div class="card">
     <div class="ctitle">담당자별 업무량 (코너 누적)</div>
     <div class="csub">막대 길이 = 맡은 꼭지 수, 색 = 코너. 공동 담당은 각자 1꼭지로 셉니다</div>
@@ -408,6 +405,44 @@ footer{text-align:center;padding:1.5rem;font-size:11px;color:var(--text3);border
   </div>
 </section>
 
+<!-- ⑥ 부서 분석 -->
+<section class="sec" id="sec-dept">
+  <div class="mrow" id="dp-metrics"></div>
+  <div class="g2">
+    <div class="card" style="margin-bottom:0">
+      <div class="ctitle">조직 분류별 비중</div>
+      <div class="csub">기구조직도(2026.10.15부) 기준</div>
+      <div class="cwrap" style="height:300px"><canvas id="c-dp-cat" role="img" aria-label="조직 분류별 꼭지 수 도넛 차트"></canvas></div>
+    </div>
+    <div class="card" style="margin-bottom:0">
+      <div class="ctitle">분류별 상위 부서</div>
+      <div class="csub">각 분류에서 가장 많이 다룬 부서</div>
+      <div id="dp-cat-list" style="display:flex;flex-direction:column;gap:10px"></div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="ctitle">부서별 기사 수</div>
+    <div class="csub">상위 25개 · 막대를 누르면 아래에 기사 목록이 나옵니다</div>
+    <div class="cwrap" id="dp-bar-wrap" style="height:620px"><canvas id="c-dp-bar" role="img" aria-label="부서별 기사 수 막대 차트"></canvas></div>
+  </div>
+  <div class="card" id="dp-list-card" style="display:none">
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:1rem">
+      <div>
+        <div class="ctitle" id="dp-list-title">-</div>
+        <div class="csub" id="dp-list-sub" style="margin-bottom:0">-</div>
+      </div>
+      <button onclick="selectDept(null)" style="padding:8px 14px;background:transparent;color:var(--text2);border:1px solid var(--border);border-radius:6px;cursor:pointer;font-weight:600;font-size:12px;font-family:'Noto Sans KR',sans-serif">닫기</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="dtable">
+        <thead><tr><th>호</th><th>발행일</th><th>코너</th><th style="width:45%">콘텐츠</th><th style="width:25%">비고</th><th>담당</th></tr></thead>
+        <tbody id="dp-list-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+  <div id="dp-note" style="font-size:12px;color:var(--text3);line-height:1.7;padding:0 .25rem"></div>
+</section>
+
 </main>
 
 <footer>병원보 편집계획안 기반 · 수치는 시트에서 실시간으로 계산합니다</footer>
@@ -419,8 +454,10 @@ const GOOGLE_APPS_SCRIPT_URL='https://script.google.com/macros/s/AKfycbzARRoZl7y
 let ALL_DATA=[];   // {issue, year, month, day, dateLabel, page, status, section, title, note, staffRaw, staff[]}
 
 const gr='rgba(0,0,0,0.06)', tx='#6b6b65';
-const tabOrder=['current','overview','compare','staff','workload','section'];
-const tabNames=['진행 현황','전체 현황','연도별 비교','담당자 현황','업무량 분석','코너 분석'];
+const tabOrder=['current','overview','compare','staff','workload','section','dept'];
+const tabNames=['진행 현황','전체 현황','연도별 비교','담당자 현황','업무량 분석','코너 분석','부서 분석'];
+// 연도 선택을 따르지 않는 탭 (진행 현황은 오늘 기준, 연도별 비교는 연도 비교가 목적)
+const YEAR_FREE_TABS=['current','compare'];
 const drawn={};
 
 /* ── 호수 → 발행일 ──
@@ -634,8 +671,43 @@ function show(name){
     if(name==='staff') drawStaff();
     if(name==='workload') drawWorkload();
     if(name==='section') drawSection();
+    if(name==='dept') drawDept();
     drawn[name]=true;
   }
+  syncYearBar(name);
+}
+
+/* ── 연도 선택 ──
+   한 곳에서 고르면 모든 분석 탭이 같은 기간을 봅니다.
+   진행 현황(오늘 기준)과 연도별 비교(연도 간 비교가 목적)는 따르지 않습니다. */
+let curYear='전체';
+
+function yearRows(){
+  return curYear==='전체' ? ALL_DATA : ALL_DATA.filter(function(r){return String(r.year)===curYear;});
+}
+function yearLabel(){ return curYear==='전체'?'전체 기간':curYear+'년'; }
+
+function setYear(y){
+  curYear=y;
+  document.querySelectorAll('#year-btns .ybtn').forEach(function(b){b.classList.toggle('active',b.textContent===y);});
+  Object.keys(drawn).forEach(function(k){delete drawn[k];});
+  show(getCurrentTab());
+}
+
+function buildYearBar(){
+  const box=document.getElementById('year-btns');
+  box.innerHTML=['전체'].concat(dataYears().map(String)).map(function(y){
+    return '<button class="ybtn'+(y===curYear?' active':'')+'" onclick="setYear(\''+y+'\')">'+y+'</button>';
+  }).join('');
+}
+
+function syncYearBar(tab){
+  const free=YEAR_FREE_TABS.indexOf(tab)>=0;
+  document.getElementById('year-btns').style.opacity=free?'.35':'1';
+  document.getElementById('year-btns').style.pointerEvents=free?'none':'auto';
+  document.getElementById('year-note').textContent=free
+    ? (tab==='current'?'진행 현황은 오늘 기준이라 연도 선택을 따르지 않습니다':'연도별 비교는 항상 전체 기간을 봅니다')
+    : yearLabel()+' 기준으로 보고 있습니다';
 }
 function destroyChart(id){const c=Chart.getChart(id); if(c) c.destroy();}
 
@@ -643,6 +715,7 @@ function initDashboard(){
   Object.keys(drawn).forEach(function(k){delete drawn[k];});
   const ys=dataYears();
   document.getElementById('h-range').textContent=ys.length?ys[0]+'–'+ys[ys.length-1]:'-';
+  buildYearBar();
   show('current');   // 지금 만들고 있는 호를 먼저 보여줍니다
   console.log('대시보드 초기화 완료');
 }
@@ -749,20 +822,21 @@ function drawCurrent(){
 
 /* ══ ① 전체 현황 ══ */
 function drawOverview(){
-  const issues=[...new Set(ALL_DATA.map(function(r){return r.issue;}))].sort(function(a,b){return a-b;});
+  const D=yearRows();
+  const issues=[...new Set(D.map(function(r){return r.issue;}))].sort(function(a,b){return a-b;});
   const people=new Set();
-  ALL_DATA.forEach(function(r){r.staff.forEach(function(s){if(NON_PERSON.indexOf(s)<0)people.add(s);});});
+  D.forEach(function(r){r.staff.forEach(function(s){if(NON_PERSON.indexOf(s)<0)people.add(s);});});
   const ys=dataYears();
   const first=issues.length?issueDate(issues[0]):null, last=issues.length?issueDate(issues[issues.length-1]):null;
 
   document.getElementById('ov-metrics').innerHTML=
-    '<div class="mc g"><div class="mlabel">총 꼭지 수</div><div class="mval">'+ALL_DATA.length.toLocaleString()+'<span class="munit">꼭지</span></div><div class="msub">전체 기간</div></div>'+
+    '<div class="mc g"><div class="mlabel">총 꼭지 수</div><div class="mval">'+D.length.toLocaleString()+'<span class="munit">꼭지</span></div><div class="msub">'+yearLabel()+'</div></div>'+
     '<div class="mc b"><div class="mlabel">분석 호수</div><div class="mval">'+issues.length+'<span class="munit">호</span></div><div class="msub">'+(issues.length?issues[0]+'~'+issues[issues.length-1]+'호':'-')+'</div></div>'+
     '<div class="mc a"><div class="mlabel">기간</div><div class="mval" style="font-size:1.5rem">'+(first?first.year+'–'+last.year:'-')+'</div><div class="msub">'+(first?first.year+'.'+first.month+' ~ '+last.year+'.'+last.month:'-')+'</div></div>'+
     '<div class="mc p"><div class="mlabel">담당 인원</div><div class="mval">'+people.size+'<span class="munit">명</span></div><div class="msub">편집실·SNS 표기 제외</div></div>'+
-    '<div class="mc t"><div class="mlabel">호당 평균</div><div class="mval">'+(issues.length?(ALL_DATA.length/issues.length).toFixed(1):'0')+'<span class="munit">꼭지</span></div><div class="msub">한 호에 싣는 꼭지 수</div></div>';
+    '<div class="mc t"><div class="mlabel">호당 평균</div><div class="mval">'+(issues.length?(D.length/issues.length).toFixed(1):'0')+'<span class="munit">꼭지</span></div><div class="msub">한 호에 싣는 꼭지 수</div></div>';
 
-  const byIssue={}; ALL_DATA.forEach(function(r){byIssue[r.issue]=(byIssue[r.issue]||0)+1;});
+  const byIssue={}; D.forEach(function(r){byIssue[r.issue]=(byIssue[r.issue]||0)+1;});
   destroyChart('c-issue-trend');
   new Chart(document.getElementById('c-issue-trend'),{
     type:'line',
@@ -772,7 +846,7 @@ function drawOverview(){
       scales:{x:{grid:{display:false},ticks:{color:tx,maxTicksLimit:16}},y:{grid:{color:gr},ticks:{color:tx},beginAtZero:true}}}
   });
 
-  const byYear={}; ALL_DATA.forEach(function(r){byYear[r.year]=(byYear[r.year]||0)+1;});
+  const byYear={}; D.forEach(function(r){byYear[r.year]=(byYear[r.year]||0)+1;});
   destroyChart('c-year-bar');
   new Chart(document.getElementById('c-year-bar'),{
     type:'bar',
@@ -781,8 +855,8 @@ function drawOverview(){
       scales:{x:{grid:{display:false},ticks:{color:tx}},y:{grid:{color:gr},ticks:{color:tx},beginAtZero:true}}}
   });
 
-  const ts=topSections(ALL_DATA,9);
-  const pie={}; ALL_DATA.forEach(function(r){const g=ts.group(r.section); pie[g]=(pie[g]||0)+1;});
+  const ts=topSections(D,9);
+  const pie={}; D.forEach(function(r){const g=ts.group(r.section); pie[g]=(pie[g]||0)+1;});
   const labels=Object.keys(pie).sort(function(a,b){return (a==='그 외')-(b==='그 외')||pie[b]-pie[a];});
   destroyChart('c-section-pie');
   new Chart(document.getElementById('c-section-pie'),{
@@ -790,7 +864,7 @@ function drawOverview(){
     data:{labels:labels,datasets:[{data:labels.map(function(l){return pie[l];}),backgroundColor:labels.map(function(_,i){return secColor(i);}),borderWidth:0}]},
     options:{responsive:true,maintainAspectRatio:false,cutout:'55%',animation:false,
       plugins:{legend:{position:'right',labels:{color:tx,font:{size:11},padding:8,boxWidth:12}},
-        tooltip:{callbacks:{label:function(c){return c.label+': '+c.parsed+'꼭지 ('+Math.round(c.parsed/ALL_DATA.length*100)+'%)';}}}}}
+        tooltip:{callbacks:{label:function(c){return c.label+': '+c.parsed+'꼭지 ('+Math.round(c.parsed/D.length*100)+'%)';}}}}}
   });
 }
 
@@ -846,20 +920,19 @@ function drawCompare(){
 }
 
 /* ══ ③ 담당자 현황 ══ */
-let stYr='전체', stStaff='전체', stSection='전체';
+let stStaff='전체', stSection='전체';
 
-function setStYr(y){ stYr=y; syncStBtns(); renderStTable(); }
 function setStStaff(s){ stStaff=s; stSection='전체'; syncStBtns(); renderStTable(); }
 function setStSection(s){ stSection=(s==='전체')?'전체':s; renderStTable(); }
 function syncStBtns(){
-  document.querySelectorAll('#st-yr-btns .ybtn').forEach(function(b){b.classList.toggle('active',b.textContent===stYr);});
   document.querySelectorAll('#st-staff-btns .staff-sel-btn').forEach(function(b){b.classList.toggle('active',b.textContent===stStaff);});
 }
 
 function drawStaff(){
+  const D=yearRows();
   const ys=dataYears();
   const map={};
-  ALL_DATA.forEach(function(r){
+  D.forEach(function(r){
     r.staff.forEach(function(s){
       if(!map[s]) map[s]={};
       map[s][r.year]=(map[s][r.year]||0)+1;
@@ -881,12 +954,7 @@ function drawStaff(){
       scales:{x:{grid:{display:false},ticks:{color:tx}},y:{grid:{color:gr},ticks:{color:tx},beginAtZero:true}}}
   });
 
-  // 필터 버튼
-  const yb=document.getElementById('st-yr-btns');
-  if(!yb.children.length){
-    yb.innerHTML=['전체'].concat(ys.map(String)).map(function(y){
-      return '<button class="ybtn'+(y===stYr?' active':'')+'" onclick="setStYr(\''+y+'\')">'+y+'</button>';}).join('');
-  }
+  // 담당자 버튼
   const people=Object.keys(map).sort(function(a,b){
     const sum=function(o){return Object.keys(o).reduce(function(n,k){return n+o[k];},0);};
     return (NON_PERSON.indexOf(a)>=0)-(NON_PERSON.indexOf(b)>=0) || sum(map[b])-sum(map[a]);
@@ -900,10 +968,8 @@ function drawStaff(){
 }
 
 function renderStTable(){
-  const base=ALL_DATA.filter(function(r){
-    const sm=stStaff==='전체'||r.staff.indexOf(stStaff)>=0;
-    const ym=stYr==='전체'||String(r.year)===stYr;
-    return sm&&ym;
+  const base=yearRows().filter(function(r){
+    return stStaff==='전체'||r.staff.indexOf(stStaff)>=0;
   });
   const rows=stSection==='전체'?base:base.filter(function(r){return r.section===stSection;});
 
@@ -935,17 +1001,10 @@ function renderStTable(){
 }
 
 /* ══ ④ 업무량 분석 ══ */
-let wlYr='전체';
 const WL_TOP=9;
 
-function setWlYr(y){
-  wlYr=y;
-  document.querySelectorAll('#wl-yr-btns .wbtn').forEach(function(b){b.classList.toggle('active',b.textContent===y);});
-  drawWorkload();
-}
-
 function wlAgg(){
-  const rows=ALL_DATA.filter(function(r){return wlYr==='전체'||String(r.year)===wlYr;});
+  const rows=yearRows();
   const ts=topSections(rows,WL_TOP);
   const secTotal={}, staffTotal={}, cross={};
   let assign=0;
@@ -968,17 +1027,11 @@ function wlAgg(){
 }
 
 function drawWorkload(){
-  const btns=document.getElementById('wl-yr-btns');
-  if(!btns.children.length){
-    btns.innerHTML=['전체'].concat(dataYears().map(String)).map(function(y){
-      return '<button class="wbtn'+(y===wlYr?' active':'')+'" onclick="setWlYr(\''+y+'\')">'+y+'</button>';}).join('');
-  }
-
   const a=wlAgg();
   const pctT=function(n){return a.total?Math.round(n/a.total*100):0;};
   const pctA=function(n){return a.assign?Math.round(n/a.assign*100):0;};
   const top=a.people[0], topSec=a.sections[0];
-  const label=wlYr==='전체'?'전체 기간':wlYr+'년';
+  const label=yearLabel();
 
   document.getElementById('wl-metrics').innerHTML=
     '<div class="mc g"><div class="mlabel">총 꼭지 수</div><div class="mval">'+a.total.toLocaleString()+'<span class="munit">꼭지</span></div><div class="msub">'+label+'</div></div>'+
@@ -1021,7 +1074,7 @@ function selectSection(name){
   selectedSection=(name===selectedSection)?null:name;
   const card=document.getElementById('sec-list-card');
   if(!selectedSection){ card.style.display='none'; return; }
-  const rows=ALL_DATA.filter(function(r){return r.section===selectedSection;}).sort(function(a,b){return b.issue-a.issue;});
+  const rows=yearRows().filter(function(r){return r.section===selectedSection;}).sort(function(a,b){return b.issue-a.issue;});
   document.getElementById('sec-list-title').textContent='「'+selectedSection+'」 꼭지 목록';
   document.getElementById('sec-list-sub').textContent=rows.length+'꼭지';
   document.getElementById('sec-list-tbody').innerHTML=rows.slice(0,500).map(function(r){
@@ -1033,7 +1086,8 @@ function selectSection(name){
 }
 
 function drawSection(){
-  const c={}; ALL_DATA.forEach(function(r){c[r.section]=(c[r.section]||0)+1;});
+  const D=yearRows();
+  const c={}; D.forEach(function(r){c[r.section]=(c[r.section]||0)+1;});
   const ranked=Object.keys(c).sort(function(a,b){return c[b]-c[a];}).slice(0,25);
   document.getElementById('sec-bar-wrap').style.height=Math.max(300,ranked.length*24+60)+'px';
   destroyChart('c-section-bar');
@@ -1046,7 +1100,7 @@ function drawSection(){
       scales:{x:{grid:{color:gr},ticks:{color:tx},beginAtZero:true},y:{grid:{display:false},ticks:{color:tx,font:{size:11}}}}}
   });
 
-  const st={}; ALL_DATA.forEach(function(r){st[r.status]=(st[r.status]||0)+1;});
+  const st={}; D.forEach(function(r){st[r.status]=(st[r.status]||0)+1;});
   const stKeys=['게재','연기','미정'].filter(function(k){return st[k];});
   destroyChart('c-status');
   new Chart(document.getElementById('c-status'),{
@@ -1054,12 +1108,12 @@ function drawSection(){
     data:{labels:stKeys,datasets:[{data:stKeys.map(function(k){return st[k];}),backgroundColor:['#2d6a4f','#b5601a','#888780'],borderWidth:0}]},
     options:{responsive:true,maintainAspectRatio:false,cutout:'58%',animation:false,
       plugins:{legend:{position:'bottom',labels:{color:tx,font:{size:11},padding:10,boxWidth:12}},
-        tooltip:{callbacks:{label:function(x){return x.label+': '+x.parsed+'꼭지 ('+Math.round(x.parsed/ALL_DATA.length*100)+'%)';}}}}}
+        tooltip:{callbacks:{label:function(x){return x.label+': '+x.parsed+'꼭지 ('+Math.round(x.parsed/D.length*100)+'%)';}}}}}
   });
 
   const ys=dataYears();
   const setByYear={}; ys.forEach(function(y){setByYear[y]=new Set();});
-  ALL_DATA.forEach(function(r){setByYear[r.year].add(r.section);});
+  D.forEach(function(r){setByYear[r.year].add(r.section);});
   destroyChart('c-section-count');
   new Chart(document.getElementById('c-section-count'),{
     type:'bar',
@@ -1070,6 +1124,110 @@ function drawSection(){
 
   selectedSection=null;
   document.getElementById('sec-list-card').style.display='none';
+}
+
+/* ══ ⑥ 부서 분석 ══
+   서울아산병원 기구조직도(변경, 2026.10.15부)에서 뽑은 조직 단위 목록입니다.
+   기사 제목·비고·코너에서 조직 이름을 찾아 부서를 붙입니다. 긴 이름을 먼저 보므로
+   '소화기내과'가 '내과'보다 우선 잡힙니다. 조직 개편이 있으면 이 목록을 갈아끼우세요. */
+const ORG_UNITS=[{"n":"재해예방관리실","c":"직속 조직"},{"n":"임상연구심의위원회","c":"직속 조직"},{"n":"청라병원추진단","c":"직속 조직"},{"n":"중입자도입추진단","c":"직속 조직"},{"n":"기획팀","c":"행정·지원"},{"n":"경영분석팀","c":"행정·지원"},{"n":"이노베이션디자인센터","c":"행정·지원"},{"n":"PROM팀","c":"행정·지원"},{"n":"윤리경영팀","c":"행정·지원"},{"n":"홍보팀","c":"행정·지원"},{"n":"고객만족팀","c":"행정·지원"},{"n":"디자인·콘텐츠팀","c":"행정·지원"},{"n":"데이터융합팀","c":"행정·지원"},{"n":"의료정보관리팀","c":"행정·지원"},{"n":"IT전략팀","c":"행정·지원"},{"n":"IT서비스팀","c":"행정·지원"},{"n":"국제진료센터","c":"행정·지원"},{"n":"국제교류팀","c":"행정·지원"},{"n":"AGS팀","c":"행정·지원"},{"n":"AI혁신지원팀","c":"행정·지원"},{"n":"운영팀","c":"행정·지원"},{"n":"기술팀","c":"행정·지원"},{"n":"중입자운영팀","c":"행정·지원"},{"n":"의학물리기술팀","c":"행정·지원"},{"n":"어린이병원","c":"전문병원"},{"n":"심장병원","c":"전문병원"},{"n":"암병원","c":"전문병원"},{"n":"당뇨병센터","c":"센터"},{"n":"건강증진센터","c":"센터"},{"n":"장기이식센터","c":"센터"},{"n":"소화기내시경센터","c":"센터"},{"n":"담도ㆍ췌장센터","c":"센터"},{"n":"간센터","c":"센터"},{"n":"염증성장질환센터","c":"센터"},{"n":"뇌졸중센터","c":"센터"},{"n":"천식ㆍCOPD센터","c":"센터"},{"n":"로봇수술센터","c":"센터"},{"n":"방사선수술센터","c":"센터"},{"n":"폐고혈압ㆍ정맥혈전센터","c":"센터"},{"n":"약물감시센터","c":"센터"},{"n":"의학유전학센터","c":"센터"},{"n":"비만대사통합진료센터","c":"센터"},{"n":"파킨슨·알츠하이머센터","c":"센터"},{"n":"아산유전체센터","c":"센터"},{"n":"척추센터","c":"센터"},{"n":"응급의료센터","c":"센터"},{"n":"수술실","c":"센터"},{"n":"중환자실","c":"센터"},{"n":"감염관리실","c":"센터"},{"n":"임상시험센터","c":"센터"},{"n":"융합의학과","c":"센터"},{"n":"조직세포자원센터","c":"센터"},{"n":"세포치료센터","c":"센터"},{"n":"임상연구보호센터","c":"센터"},{"n":"빅데이터연구센터","c":"센터"},{"n":"융합연구지원센터","c":"센터"},{"n":"신약개발지원센터","c":"센터"},{"n":"소아호흡기ㆍ알레르기센터","c":"센터"},{"n":"선천성심장병센터","c":"센터"},{"n":"척추측만증센터","c":"센터"},{"n":"태아치료센터","c":"센터"},{"n":"소아응급의료센터","c":"센터"},{"n":"협심증ㆍ심근경색증센터","c":"센터"},{"n":"대동맥질환센터","c":"센터"},{"n":"판막질환센터","c":"센터"},{"n":"심방세동센터","c":"센터"},{"n":"심장병예방재활센터","c":"센터"},{"n":"심부전ㆍ심장이식센터","c":"센터"},{"n":"심장영상센터","c":"센터"},{"n":"말초혈관질환센터","c":"센터"},{"n":"위암센터","c":"센터"},{"n":"폐암센터","c":"센터"},{"n":"혈액암·골수이식센터","c":"센터"},{"n":"대장암센터","c":"센터"},{"n":"유방암센터","c":"센터"},{"n":"뇌종양센터","c":"센터"},{"n":"간암센터","c":"센터"},{"n":"두경부암센터","c":"센터"},{"n":"육종·희귀암센터","c":"센터"},{"n":"식도암센터","c":"센터"},{"n":"난소·자궁암센터","c":"센터"},{"n":"피부암센터","c":"센터"},{"n":"담도·췌장암센터","c":"센터"},{"n":"비뇨기암센터","c":"센터"},{"n":"유전체맞춤암치료센터","c":"센터"},{"n":"CAR｜T센터","c":"센터"},{"n":"테라노스틱스센터","c":"센터"},{"n":"암환자라이프케어센터","c":"센터"},{"n":"완화의료센터","c":"센터"},{"n":"갑상선암센터","c":"센터"},{"n":"진료지원팀","c":"진료지원"},{"n":"진료협력팀","c":"진료지원"},{"n":"PI팀","c":"진료지원"},{"n":"대외협력팀","c":"진료지원"},{"n":"암병원운영팀","c":"진료지원"},{"n":"건진운영팀","c":"진료지원"},{"n":"감염관리팀","c":"진료지원"},{"n":"항암유효성평가지원센터","c":"진료지원"},{"n":"내과","c":"진료과"},{"n":"소아청소년과","c":"진료과"},{"n":"정신건강의학과","c":"진료과"},{"n":"신경과","c":"진료과"},{"n":"피부과","c":"진료과"},{"n":"외과","c":"진료과"},{"n":"정형외과","c":"진료과"},{"n":"신경외과","c":"진료과"},{"n":"심장혈관흉부외과","c":"진료과"},{"n":"성형외과","c":"진료과"},{"n":"산부인과","c":"진료과"},{"n":"안과","c":"진료과"},{"n":"이비인후과","c":"진료과"},{"n":"비뇨의학과","c":"진료과"},{"n":"재활의학과","c":"진료과"},{"n":"가정의학과","c":"진료과"},{"n":"치과","c":"진료과"},{"n":"응급의학과","c":"진료과"},{"n":"마취통증의학과","c":"진료과"},{"n":"방사선종양학과","c":"진료과"},{"n":"영상의학과","c":"진료과"},{"n":"핵의학과","c":"진료과"},{"n":"진단검사의학과","c":"진료과"},{"n":"병리과","c":"진료과"},{"n":"건강의학과","c":"진료과"},{"n":"임상약리학과","c":"진료과"},{"n":"의학통계학과","c":"진료과"},{"n":"정보의학과","c":"진료과"},{"n":"호흡기내과","c":"진료 분과"},{"n":"심장내과","c":"진료 분과"},{"n":"소화기내과","c":"진료 분과"},{"n":"종양내과","c":"진료 분과"},{"n":"혈액내과","c":"진료 분과"},{"n":"내분비내과","c":"진료 분과"},{"n":"신장내과","c":"진료 분과"},{"n":"감염내과","c":"진료 분과"},{"n":"알레르기내과","c":"진료 분과"},{"n":"류마티스내과","c":"진료 분과"},{"n":"노년내과","c":"진료 분과"},{"n":"소아청소년전문과","c":"진료 분과"},{"n":"신생아과","c":"진료 분과"},{"n":"소아청소년종양혈액과","c":"진료 분과"},{"n":"소아청소년심장과","c":"진료 분과"},{"n":"간담도췌외과","c":"진료 분과"},{"n":"간이식ㆍ간담도외과","c":"진료 분과"},{"n":"신ㆍ췌장이식외과","c":"진료 분과"},{"n":"유방외과","c":"진료 분과"},{"n":"내분비외과","c":"진료 분과"},{"n":"대장항문외과","c":"진료 분과"},{"n":"위장관외과","c":"진료 분과"},{"n":"중환자ㆍ외상외과","c":"진료 분과"},{"n":"혈관외과","c":"진료 분과"},{"n":"소아외과","c":"진료 분과"},{"n":"소아심장외과","c":"진료 분과"},{"n":"재활의학팀","c":"진료지원"},{"n":"방사선종양팀","c":"진료지원"},{"n":"영상의학팀","c":"진료지원"},{"n":"핵의학팀","c":"진료지원"},{"n":"방사성의약품제조소","c":"진료지원"},{"n":"진단검사의학팀","c":"진료지원"},{"n":"병리팀","c":"진료지원"},{"n":"약제팀","c":"진료지원"},{"n":"영양팀","c":"진료지원"},{"n":"특수검사팀","c":"진료지원"},{"n":"통합돌봄지원팀","c":"간호"},{"n":"암병원간호1팀","c":"간호"},{"n":"암병원간호2팀","c":"간호"},{"n":"내과간호1팀","c":"간호"},{"n":"내과간호2팀","c":"간호"},{"n":"외과간호1팀","c":"간호"},{"n":"외과간호2팀","c":"간호"},{"n":"심장병원간호팀","c":"간호"},{"n":"어린이병원간호팀","c":"간호"},{"n":"수술간호팀","c":"간호"},{"n":"중환자간호팀","c":"간호"},{"n":"응급간호팀","c":"간호"},{"n":"외래간호팀","c":"간호"},{"n":"중앙공급팀","c":"간호"},{"n":"간호교육행정팀","c":"간호"},{"n":"교육수련팀","c":"교육"},{"n":"아카데미운영팀","c":"교육"},{"n":"시뮬레이션센터","c":"교육"},{"n":"임상해부교육센터","c":"교육"},{"n":"연구기획팀","c":"연구"},{"n":"연구지원팀","c":"연구"},{"n":"R&D사업팀","c":"연구"},{"n":"인사팀","c":"행정·지원"},{"n":"노사협력팀","c":"행정·지원"},{"n":"재무회계팀","c":"행정·지원"},{"n":"원무팀","c":"행정·지원"},{"n":"법무팀","c":"행정·지원"},{"n":"적정진료팀","c":"행정·지원"},{"n":"사회복지팀","c":"행정·지원"},{"n":"총무팀","c":"행정·지원"},{"n":"자재팀","c":"행정·지원"},{"n":"시설팀","c":"행정·지원"},{"n":"보안관리팀","c":"행정·지원"},{"n":"후생사업팀","c":"행정·지원"},{"n":"의공팀","c":"행정·지원"},{"n":"심장검사팀","c":"진료지원"},{"n":"소화기내시경팀","c":"진료지원"},{"n":"IDC","c":"행정·지원","alias":"이노베이션디자인센터"},{"n":"디콘","c":"행정·지원","alias":"디자인·콘텐츠팀"}];
+const ORG_SORTED=ORG_UNITS.slice().sort(function(a,b){return b.n.length-a.n.length;});
+const ORG_CATS=['진료과','진료 분과','센터','전문병원','진료지원','간호','행정·지원','연구','교육','직속 조직'];
+
+function deptOf(r){
+  const hay=(r.title+' '+r.note+' '+r.section).replace(/\s+/g,'');
+  for(let i=0;i<ORG_SORTED.length;i++){
+    if(hay.indexOf(ORG_SORTED[i].n)>=0) return ORG_SORTED[i];
+  }
+  return null;
+}
+
+let selectedDept=null;
+
+function selectDept(name){
+  selectedDept=(name===selectedDept)?null:name;
+  const card=document.getElementById('dp-list-card');
+  if(!selectedDept){ card.style.display='none'; return; }
+  const rows=yearRows().filter(function(r){const u=deptOf(r); return u&&u.n===selectedDept;})
+                       .sort(function(a,b){return b.issue-a.issue;});
+  document.getElementById('dp-list-title').textContent='「'+selectedDept+'」 기사 목록';
+  document.getElementById('dp-list-sub').textContent=yearLabel()+' · '+rows.length+'꼭지';
+  document.getElementById('dp-list-tbody').innerHTML=rows.slice(0,400).map(function(r){
+    return '<tr><td class="num">'+r.issue+'</td><td class="num">'+r.year+'.'+r.month+'.'+r.day+'</td>'+
+      '<td style="white-space:nowrap">'+r.section+'</td>'+
+      '<td style="word-break:keep-all">'+r.title+'</td>'+
+      '<td style="color:var(--text3);font-size:12px;word-break:keep-all">'+(r.note||'-')+'</td>'+
+      '<td style="font-weight:600;white-space:nowrap">'+r.staffRaw+'</td></tr>';
+  }).join('');
+  card.style.display='block';
+  card.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+
+function drawDept(){
+  const D=yearRows();
+  const byUnit={}, byCat={}, unitCat={};
+  let matched=0;
+  D.forEach(function(r){
+    const u=deptOf(r);
+    if(!u) return;
+    matched++;
+    byUnit[u.n]=(byUnit[u.n]||0)+1;
+    byCat[u.c]=(byCat[u.c]||0)+1;
+    unitCat[u.n]=u.c;
+  });
+  const units=Object.keys(byUnit).sort(function(a,b){return byUnit[b]-byUnit[a];});
+  const rate=D.length?Math.round(matched/D.length*100):0;
+  const topUnit=units[0];
+  const cats=ORG_CATS.filter(function(c){return byCat[c];});
+  const topCat=cats.slice().sort(function(a,b){return byCat[b]-byCat[a];})[0];
+
+  document.getElementById('dp-metrics').innerHTML=
+    '<div class="mc g"><div class="mlabel">부서가 확인된 꼭지</div><div class="mval">'+matched.toLocaleString()+'<span class="munit">꼭지</span></div><div class="msub">'+yearLabel()+'</div></div>'+
+    '<div class="mc a"><div class="mlabel">확인율</div><div class="mval">'+rate+'<span class="munit">%</span></div><div class="msub">전체 '+D.length.toLocaleString()+'꼭지 중</div></div>'+
+    '<div class="mc b"><div class="mlabel">등장 부서 수</div><div class="mval">'+units.length+'<span class="munit">곳</span></div><div class="msub">조직도 '+ORG_UNITS.length+'곳 중</div></div>'+
+    '<div class="mc p"><div class="mlabel">최다 부서</div><div class="mval" style="font-size:1.4rem">'+(topUnit||'-')+'</div><div class="msub">'+(topUnit?byUnit[topUnit]+'꼭지':'데이터 없음')+'</div></div>'+
+    '<div class="mc t"><div class="mlabel">최다 분류</div><div class="mval" style="font-size:1.4rem">'+(topCat||'-')+'</div><div class="msub">'+(topCat?byCat[topCat]+'꼭지':'데이터 없음')+'</div></div>';
+
+  destroyChart('c-dp-cat');
+  new Chart(document.getElementById('c-dp-cat'),{
+    type:'doughnut',
+    data:{labels:cats,datasets:[{data:cats.map(function(c){return byCat[c];}),backgroundColor:cats.map(function(_,i){return secColor(i);}),borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'55%',animation:false,
+      plugins:{legend:{position:'right',labels:{color:tx,font:{size:11},padding:8,boxWidth:12}},
+        tooltip:{callbacks:{label:function(x){return x.label+': '+x.parsed+'꼭지 ('+(matched?Math.round(x.parsed/matched*100):0)+'%)';}}}}}
+  });
+
+  document.getElementById('dp-cat-list').innerHTML=cats.map(function(c,i){
+    const inCat=units.filter(function(u){return unitCat[u]===c;}).slice(0,4);
+    return '<div class="scard" style="padding:.7rem 1rem">'+
+      '<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px">'+
+        '<span style="font-weight:700"><span class="tl-chip" style="background:'+secColor(i)+'"></span>'+c+'</span>'+
+        '<span style="color:var(--text3)">'+byCat[c]+'꼭지</span></div>'+
+      '<div style="font-size:12px;color:var(--text2)">'+
+        (inCat.map(function(u){return u+' <span style="color:var(--text3)">'+byUnit[u]+'</span>';}).join(' · ')||'-')+'</div>'+
+    '</div>';
+  }).join('');
+
+  const top=units.slice(0,25);
+  document.getElementById('dp-bar-wrap').style.height=Math.max(300,top.length*24+60)+'px';
+  destroyChart('c-dp-bar');
+  new Chart(document.getElementById('c-dp-bar'),{
+    type:'bar',
+    data:{labels:top,datasets:[{data:top.map(function(u){return byUnit[u];}),backgroundColor:top.map(function(u){return secColor(ORG_CATS.indexOf(unitCat[u]));}),borderRadius:3,borderWidth:0}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,animation:false,
+      onClick:function(e,els){ if(els.length) selectDept(top[els[0].index]); },
+      plugins:{legend:{display:false},tooltip:{callbacks:{label:function(x){return unitCat[top[x.dataIndex]]+' · '+x.parsed.x+'꼭지 — 눌러서 목록 보기';}}}},
+      scales:{x:{grid:{color:gr},ticks:{color:tx},beginAtZero:true},y:{grid:{display:false},ticks:{color:tx,font:{size:11}}}}}
+  });
+
+  document.getElementById('dp-note').innerHTML=
+    '기사 제목·비고·코너에서 조직 이름을 찾아 부서를 붙입니다. <strong>확인율 '+rate+'%</strong>인 이유는, '+
+    '뉴스 기사의 비고가 <em>"박준규, 안중호 (11.9)"</em> 처럼 담당자와 의료진 이름만 적혀 있어 부서를 알 수 없는 경우가 많기 때문입니다. '+
+    '위 수치는 <strong>부서가 확인된 '+matched.toLocaleString()+'꼭지 기준</strong>이며, 나머지를 포함한 실제 분포와는 다를 수 있습니다.<br>'+
+    '조직 목록은 기구조직도(변경) 2026.10.15부 기준 '+ORG_UNITS.length+'곳입니다.';
+
+  selectedDept=null;
+  document.getElementById('dp-list-card').style.display='none';
 }
 
 /* ══ PDF ══ */
