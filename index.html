@@ -961,7 +961,7 @@ function drawAction(){
     : '<div style="color:var(--text3);font-size:13px">미확정 콘텐츠가 없습니다</div>';
 
   wrap.innerHTML=
-    '<div class="g2" style="margin-bottom:1.25rem">'+summary+'</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:1.25rem">'+summary+'</div>'+
     '<div class="card"><div class="ctitle">마감 날짜 (비고 기준)</div>'+
       '<div class="csub">진행 중과 다음 호 콘텐츠의 비고에 적힌 날짜(예: 12/8)를 앞으로 다가오는 순서로 모았습니다. 지난 날짜는 3일 이내만 남깁니다. 3일 이내는 빨갛게 표시합니다.</div>'+dlHtml+'</div>'+
     '<div class="card">'+
