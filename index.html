@@ -83,6 +83,13 @@ body{font-family:'Segoe UI','Noto Sans KR',sans-serif;background:var(--bg);color
 /* 담당자 카드 */
 .sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
 .scard{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:1rem 1.25rem}
+/* 진행 현황의 칩 — 누르면 아래 표를 그 조건만 남깁니다 */
+.fchip{cursor:pointer;user-select:none;transition:box-shadow .15s,transform .1s}
+.fchip:hover{box-shadow:0 0 0 2px #cbd5e1}
+.fchip:active{transform:scale(0.97)}
+.fchip.on{box-shadow:0 0 0 2px var(--blue)}
+.fnote{font-size:12px;color:var(--text2);margin:-0.5rem 0 1rem;line-height:1.6}
+.fnote a{color:var(--blue);text-decoration:none;font-weight:600}
 .sname{font-weight:700;font-size:14px;margin-bottom:6px}
 .sbar-w{background:var(--bg);border-radius:4px;height:5px;margin-bottom:5px;overflow:hidden}
 .sbar{height:100%;border-radius:4px;background:var(--green)}
@@ -872,6 +879,77 @@ function dday(issue){
   return n>0 ? 'D-'+n : '발행 '+(-n)+'일 지남';
 }
 
+/* ── 진행 현황: 칩을 눌러 아래 표를 거릅니다 ──────────────────────
+   담당자 칩 하나, 상태 칩 하나까지 같이 걸 수 있고(예: 민경준 + 지면 미정),
+   같은 칩을 다시 누르면 풀립니다. 호마다 따로 기억하므로 호를 옮겨도 남습니다. */
+const CUR_F={};
+const STATUS_LABEL={'게재':'지면 확정','미정':'지면 미정','연기':'연기'};
+
+function curFilter(issue){
+  if(!CUR_F[issue]) CUR_F[issue]={status:null,staff:null};
+  return CUR_F[issue];
+}
+
+function statusChip(issue, key, label, n, extra){
+  return '<span class="scard fchip" data-fkind="status" data-fval="'+key+'" '+
+    'data-fissue="'+issue+'" title="'+label+'만 보기" '+
+    'style="padding:.45rem .8rem;'+extra+'">'+label+' <strong>'+n+'</strong></span>';
+}
+
+function toggleCurFilter(issue, kind, val){
+  const f=curFilter(issue);
+  f[kind]=(f[kind]===val)?null:val;
+  applyCurFilter(issue);
+}
+
+function clearCurFilter(issue){
+  CUR_F[issue]={status:null,staff:null};
+  applyCurFilter(issue);
+}
+
+/** 고른 조건에 맞는 행만 남기고, 칩 표시와 안내 줄을 맞춥니다. */
+function applyCurFilter(issue){
+  const blk=document.getElementById('blk-'+issue);
+  if(!blk) return;
+  const f=curFilter(issue);
+  let shown=0;
+  blk.querySelectorAll('tbody tr').forEach(function(tr){
+    const okStatus=!f.status || tr.getAttribute('data-status')===f.status;
+    const okStaff=!f.staff || String(tr.getAttribute('data-staff')||'').split('|').indexOf(f.staff)>=0;
+    const ok=okStatus&&okStaff;
+    tr.style.display=ok?'':'none';
+    if(ok) shown++;
+  });
+  blk.querySelectorAll('.fchip').forEach(function(el){
+    const on=f[el.getAttribute('data-fkind')]===el.getAttribute('data-fval');
+    el.classList.toggle('on', on);
+  });
+  const parts=[];
+  if(f.staff) parts.push(f.staff);
+  if(f.status) parts.push(STATUS_LABEL[f.status]||f.status);
+  const note=blk.querySelector('.fnote');
+  if(note){
+    if(parts.length){
+      note.innerHTML='<strong>'+parts.join(' · ')+'</strong> '+shown+'콘텐츠만 보는 중 · '+
+        '<a href="#" class="fclear" data-fissue="'+issue+'">전체 보기</a>';
+      note.style.display='';
+    } else {
+      note.innerHTML='';
+      note.style.display='none';
+    }
+  }
+}
+
+document.addEventListener('click', function(ev){
+  const clr=ev.target.closest('.fclear');
+  if(clr){ ev.preventDefault(); clearCurFilter(Number(clr.getAttribute('data-fissue'))); return; }
+  const chip=ev.target.closest('.fchip');
+  if(!chip) return;
+  toggleCurFilter(Number(chip.getAttribute('data-fissue')),
+                  chip.getAttribute('data-fkind'),
+                  chip.getAttribute('data-fval'));
+});
+
 function issueBlock(issue, kind){
   const rows=ALL_DATA.filter(function(r){return r.issue===issue;});
   const d=issueDate(issue);
@@ -884,7 +962,9 @@ function issueBlock(issue, kind){
   const people=Object.keys(byStaff).sort(function(a,b){return byStaff[b]-byStaff[a];});
 
   const chips=people.map(function(s){
-    return '<span class="scard" style="padding:.45rem .8rem;font-size:12px;white-space:nowrap;'+staffBg(s)+'">'+
+    return '<span class="scard fchip" data-fkind="staff" data-fval="'+s+'" '+
+      'data-fissue="'+issue+'" title="'+s+' 담당만 보기" '+
+      'style="padding:.45rem .8rem;font-size:12px;white-space:nowrap;'+staffBg(s)+'">'+
       '<strong>'+s+'</strong> <span style="color:#1e293b;font-weight:600">'+byStaff[s]+'</span></span>';
   }).join('');
 
@@ -898,7 +978,7 @@ function issueBlock(issue, kind){
 
   const body=sorted.map(function(r){
     const dim=r.status==='게재'?'':' style="background:#fffdf7"';
-    return '<tr'+dim+'>'+
+    return '<tr data-status="'+r.status+'" data-staff="'+r.staff.join('|')+'"'+dim+'>'+
       '<td class="num" data-sort="'+pageKey(r.page)+'"'+pageBg(r)+'>'+(r.page||'-')+'</td>'+
       '<td><span class="tag-type tag-'+r.status+'">'+r.status+'</span></td>'+
       '<td style="word-break:keep-all;overflow-wrap:anywhere">'+r.section+'</td>'+
@@ -918,19 +998,20 @@ function issueBlock(issue, kind){
     ? '<span class="badge bo">진행 중</span>'
     : (kind==='selected' ? '<span class="badge bo" style="background:#e0f2fe;color:#0369a1">선택한 호</span>' : '<span class="badge bi">다음 호</span>');
 
-  return '<div class="card">'+
+  return '<div class="card" id="blk-'+issue+'">'+
     '<div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:1rem">'+
       '<div>'+
         '<div class="ctitle">'+badge+' &nbsp;제'+issue+'호 · '+d.year+'년 '+d.month+'월 '+d.day+'일 자</div>'+
         '<div class="csub" style="margin-bottom:0">'+dday(issue)+' · 총 '+rows.length+'콘텐츠 · 담당 '+people.length+'명 &nbsp;'+link+'</div>'+
       '</div>'+
       '<div style="display:flex;gap:8px;flex-wrap:wrap;font-size:12px">'+
-        '<span class="scard" style="padding:.45rem .8rem">지면 확정 <strong>'+(st['게재']||0)+'</strong></span>'+
-        '<span class="scard" style="padding:.45rem .8rem;'+((st['미정']||0)?'border-color:var(--amber);color:var(--amber)':'')+'">지면 미정 <strong>'+(st['미정']||0)+'</strong></span>'+
-        '<span class="scard" style="padding:.45rem .8rem;'+((st['연기']||0)?'border-color:#8b2020;color:#8b2020':'')+'">연기 <strong>'+(st['연기']||0)+'</strong></span>'+
+        statusChip(issue,'게재','지면 확정',st['게재']||0,'')+
+        statusChip(issue,'미정','지면 미정',st['미정']||0,(st['미정']||0)?'border-color:var(--amber);color:var(--amber)':'')+
+        statusChip(issue,'연기','연기',st['연기']||0,(st['연기']||0)?'border-color:#8b2020;color:#8b2020':'')+
       '</div>'+
     '</div>'+
     '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1.25rem">'+chips+'</div>'+
+    '<div class="fnote" style="display:none"></div>'+
     '<div style="overflow-x:auto"><table class="dtable" style="table-layout:fixed;width:100%">'+
       '<colgroup><col style="width:8%"><col style="width:9%"><col style="width:12%"><col style="width:38%"><col style="width:25%"><col style="width:8%"></colgroup></colgroup>'+
       '<thead><tr><th style="text-align:center">지면</th><th>상태</th><th>코너</th><th>콘텐츠</th><th>비고</th><th style="text-align:center">담당</th></tr></thead>'+
@@ -994,6 +1075,8 @@ function drawCurrent(){
     '오늘 기준으로 아직 발행되지 않은 호 중 가장 가까운 호를 진행 중으로 봅니다. 발행일이 지나면 자동으로 넘어갑니다.<br>'+
     '<strong>지면 미정</strong>은 편집계획안에 지면 칸이 비어 있는 콘텐츠, <strong>연기</strong>는 지면 칸이 "연기"인 콘텐츠입니다. 둘 다 위로 올려 두었습니다.</div>';
   wrap.innerHTML=html;
+  applyCurFilter(sel);
+  if(nxt!=null) applyCurFilter(nxt);
 }
 
 /* ══ ① 전체 현황 ══ */
